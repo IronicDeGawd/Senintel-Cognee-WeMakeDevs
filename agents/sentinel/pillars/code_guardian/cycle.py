@@ -84,4 +84,12 @@ def run_code_guardian_cycle(commit: str) -> Signal:
         ts=datetime.now(UTC),
     )
     save_signal(signal)
+
+    try:
+        from .memory import remember_review  # lazy: free in sim mode
+
+        remember_review(review)
+    except Exception:
+        log.exception("remember_review failed; team memory not updated")
+
     return signal

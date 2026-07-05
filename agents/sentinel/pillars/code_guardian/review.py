@@ -16,6 +16,7 @@ from shared.llm import generate_json
 from shared.logging import get_logger
 from shared.models import MRReview
 
+from .memory import recall_context
 from .prompt import REVIEW_INSTRUCTION
 
 log = get_logger(__name__)
@@ -49,7 +50,9 @@ def run_review(commit: str) -> MRReview:
     if "error" in diff:
         raise ValueError(diff["error"])
 
-    prompt = f"{REVIEW_INSTRUCTION}\n\n{_diff_payload(diff)}"
+    memory = recall_context(diff)
+    memory_block = f"{memory}\n\n" if memory else ""
+    prompt = f"{REVIEW_INSTRUCTION}\n\n{memory_block}{_diff_payload(diff)}"
     review = generate_json(prompt, MRReview)
     # Force the known identifiers; Gemini may echo or alter them.
     review.mr_id = diff["mr_id"]
