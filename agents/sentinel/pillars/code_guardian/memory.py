@@ -13,12 +13,20 @@ demo), selected by SENTINEL_MEMORY_MODE. This module stays a thin glue layer.
 from __future__ import annotations
 
 from integrations.cognee.factory import get as get_cognee
+from shared.config import settings
+from shared.llm import generate
 from shared.logging import get_logger
 from shared.models import MemoryItem, MRReview
 
 log = get_logger(__name__)
 
 _DEFAULT_REPO = "sentinel"
+
+_SUMMARY_PROMPT = (
+    "In one sentence, describe what this code change does, focusing on data-access "
+    "patterns, loops, database queries, and structure, so it can be matched against "
+    "past code-review lessons. Output only the sentence, no preamble.\n\n"
+)
 
 
 def _diff_query(diff: dict) -> str:
@@ -27,9 +35,30 @@ def _diff_query(diff: dict) -> str:
     return f"{diff.get('service', '')} {files}\n{diff.get('diff', '')}"
 
 
+def _recall_query(diff: dict) -> str:
+    """The query we hand to the memory backend.
+
+    Cognee's semantic retrieval matches on intent-language, not raw code — a unified
+    diff embeds too far from a stored rule like "avoid N+1 queries" and recalls
+    nothing. So in real (Cognee) mode we first ask the LLM for a one-line natural-
+    language summary of the change and query with that. The sim backend uses
+    deterministic token embeddings that match the raw diff fine, and its tests must
+    stay offline, so sim keeps the raw query (no LLM call)."""
+    raw = _diff_query(diff)
+    if settings.memory_mode != "real":
+        return raw
+    try:
+        summary = generate(_SUMMARY_PROMPT + raw).strip()
+        if summary:
+            return summary
+    except Exception:
+        log.exception("diff summary for recall failed; falling back to raw diff")
+    return raw
+
+
 def recall_context(diff: dict, limit: int = 5) -> str:
     """Return a 'TEAM MEMORY' prompt block for this diff, or '' if nothing recalls."""
-    items = get_cognee().recall(_diff_query(diff), limit=limit)
+    items = get_cognee().recall(_recall_query(diff), limit=limit)
     if not items:
         return ""
     lines = ["TEAM MEMORY — conventions and past bugs this team has learned:"]
