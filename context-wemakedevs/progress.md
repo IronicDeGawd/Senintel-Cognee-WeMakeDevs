@@ -17,8 +17,18 @@
 
 ## Current Status
 - Research done (`research/wemakedevs.md`, `research/cognee.md`).
-- Plan written: `plan/cognee-pr-reviewer.md` (6-step MVP-first sequence).
-- No feature code yet. Awaiting 3 decisions: target track, MVP cutoff, demo source.
+- Plan finalized: `plan/cognee-pr-reviewer.md` — two-dev split + deployment plan.
+  Decisions locked: Cognee Cloud backend (COGNEE-35), seeded-sim PR scenario, MVP scope.
+- Branch `feature/cognee-memory`.
+- **Phase 0 contract DONE:** `MemoryItem` (shared/models.py), memory/cognee config
+  (shared/config.py), `CogneeIntegration` interface + package (integrations/cognee/).
+  Syntax-checked. Pushing so Jatin can pull + start his track in parallel.
+
+## Team split
+- **Vasu (Python/AI):** entire Cognee integration + memory brain (Phase 0, sim + real
+  adapters, memory glue, review/cycle wiring, tests, Cognee Cloud creds + seed, deploy).
+- **Jatin (fullstack/genai):** demo scenario fixtures, seed content, prompt tuning,
+  README + demo + submission, stretch dashboard MemoryPanel.
 
 ## Completed
 - 2026-07-05 — Fresh git repo (new history), pushed to `IronicDeGawd/Senintel-Cognee-WeMakeDevs`.

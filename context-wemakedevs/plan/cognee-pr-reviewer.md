@@ -1,98 +1,116 @@
-# Cognee-powered PR Reviewer (Memorium-style code memory)
+# Cognee PR Reviewer — Two-Dev Build Plan (WeMakeDevs, same-day)
 
-**Deadline:** July 5, 2026 — TODAY. Scope is MVP-first, stretch only if time.
+## Context
+WeMakeDevs "Where's My Context?" hackathon (deadline **July 5, 2026 — today**).
+One hard rule: **Cognee powers the memory.** We extend SentinelAI's `code_guardian`
+pillar into an **AI PR reviewer with long-term memory** — it `remember()`s each
+merged PR's review comments + post-merge bugs, and `recall()`s relevant team history
+when reviewing a new PR, learning a team's real conventions instead of a static guide.
 
-## Why
-Static style guides don't capture how a team *actually* reviews. Sentinel's
-`code_guardian` already reviews a diff, but statelessly — it forgets every past
-review. We give it **long-term memory via Cognee**: it learns the team's real
-conventions, recurring bug patterns, and prior review comments from history, and
-applies them to new PRs. Text-in, text-out — no engine, no rendering.
+**Decisions locked:**
+- **Memory backend = Cognee Cloud** (coupon `COGNEE-35`). Mandatory — makes the
+  submission valid + targets the iPhone/Cognee-Cloud track.
+- **JSON sim backend** = offline tests/CI only, not the demo.
+- **PR inputs = scripted fixtures** (deterministic, safe). Real Cognee memory + fake
+  PR diffs = genuine Cognee usage, repeatable for judges.
+- **Scope = MVP**: "memory changes the review." improve()/forget() + dashboard = stretch.
 
-## Goal
-On a new PR, the reviewer `recall()`s relevant team history and folds it into the
-review. On merge, it `remember()`s the review comments and any post-merge bug.
-Over time it `improve()`s (reinforces recurring patterns) and can `forget()` a
-retracted rule. Full Cognee lifecycle → targets "Best Use of Cognee".
+**Key constraint:** codebase is synchronous; Cognee SDK is async → real adapter wraps
+async in `asyncio.run(...)` behind a sync interface. `storage/incident_kb.py`
+(sim `JsonFileKB` / real `FirestoreKB`) is the template to clone.
 
-Sim/real switch so the demo never needs live creds:
-`SENTINEL_MEMORY_MODE=sim` (local fake, deterministic, no network) | `real`
-(Cognee — local self-hosted OR Cognee Cloud via code COGNEE-35).
+## Team split
+- **Vasu (Python + AI) — owns the ENTIRE Cognee integration + memory brain.**
+  Phase 0 contract, both adapters (sim + Cognee Cloud), memory glue, review/cycle
+  wiring, tests, Cognee Cloud account + creds + seed, deployment of the memory layer.
+- **Jatin (fullstack + genai)** — demo scenario fixtures, seed *content*, prompt
+  tuning (advisory), README + demo script + submission, stretch dashboard MemoryPanel.
 
-## Architecture (extends existing code_guardian pillar)
-Follow the existing adapter contract (`integrations/base.py`, sim/real factory).
+---
 
-```
-integrations/cognee/                 # NEW adapter, mirrors integrations/gitlab/
-  __init__.py
-  interface.py     # CogneeMemory ABC: remember(item), recall(query)->list, improve(), forget(dataset)
-  simulator.py     # in-memory/JSON fake: keyword+embedding match, no network (tests + demo backup)
-  real.py          # wraps cognee SDK: add/cognify/search or remember/recall; Gemini-backed
-  factory.py       # get(mode)->sim|real
-  fixtures/team_history.json  # seeded past reviews + post-merge bugs for the demo
+## Phase 0 — Contract (Vasu lands first, ~20 min → unblocks Jatin)
+1. **`shared/models.py`** — append `MemoryItem` (append-only): `repo`, `file|None`,
+   `rule`, `comment`, `severity: Severity`, `source: Literal["review","post_merge_bug"]`,
+   `commit`, `ts`, `id`.
+2. **`shared/config.py`** — append (mirror `kb_mode` L54): `memory_mode` (alias
+   `SENTINEL_MEMORY_MODE`), `cognee_api_key=""`, `cognee_dataset="sentinel_team_memory"`.
+3. **`integrations/cognee/interface.py`** — `CogneeIntegration(Integration)`
+   (`name="cognee"`): abstract `remember(item)->str`, `recall(query,limit=5)->list`,
+   `improve()->None`, `forget(dataset=None)->None`, `healthcheck()->bool`.
+Commit + push. Jatin pulls before starting.
 
-agents/sentinel/pillars/code_guardian/
-  memory.py        # NEW: remember_review(pr, review, bugs) / recall_context(diff)->str
-                   #      reinforce(pattern) / forget_rule(id) — thin glue over CogneeMemory
-  review.py        # MODIFY: run_review() first calls recall_context(diff),
-                   #         injects "Team memory" block into the REVIEW prompt
-  prompt.py        # MODIFY: REVIEW prompt gains a {team_memory} section
-  cycle.py         # MODIFY: after merge signal, remember_review(...)
+## Vasu — memory brain (Cognee)
+1. `integrations/cognee/simulator.py` — `CogneeSimulator`: clone `JsonFileKB`; embed via
+   `storage/embeddings.py` (`embed`/`cosine`/`most_similar`). Offline → tests.
+2. `integrations/cognee/real.py` — `CogneeReal`: wrap `cognee` SDK, `asyncio.run` around
+   async remember/recall (or add+cognify+search). Gemini-backed. **Demo backend.**
+3. `integrations/cognee/factory.py` — `get(mode=None)` via `build_integration`.
+4. `agents/sentinel/pillars/code_guardian/memory.py` — `recall_context(diff)->str`,
+   `remember_review(review)->None`.
+5. `review.py` (L52) — inject `recall_context(diff)` into the prompt.
+6. `cycle.py` (~L85) — call `remember_review(review)` after Signal built (remember-on-merge).
+7. `tests/test_code_memory.py` — remember→recall roundtrip, review injects recalled rule, forget clears.
+8. Cognee Cloud: claim `COGNEE-35`, `.env` (`SENTINEL_MEMORY_MODE=real`, `COGNEE_API_KEY`),
+   append vars to `.env.example`, one-off seed script for `team_history.json`.
 
-shared/config.py   # MODIFY: add SENTINEL_MEMORY_MODE + COGNEE_* settings
-.env.example       # MODIFY: append memory-mode + Cognee vars (append-only)
+## Jatin — scenario, prompt, presentation
+1. `integrations/cognee/fixtures/team_history.json` — realistic past reviews + a
+   post-merge bug (content; Vasu writes the loader).
+2. `integrations/gitlab/fixtures/mr_diff.json` — PR#1 (introduces bug) + PR#2 (same pattern).
+3. Prompt tuning (advisory) on the TEAM-MEMORY section wording.
+4. README section + 60-sec demo script + Google-Form submission.
+5. STRETCH: dashboard MemoryPanel (`GET /memory/recall` + `useMemory` + `MemoryPanel.tsx`).
 
-services/webhook_gateway/main.py  # STRETCH: on merge webhook -> remember_review
-services/dashboard_api/main.py    # STRETCH: GET /memory/recall?pr=... (what was recalled)
-dashboard/.../MemoryPanel.tsx     # STRETCH: show recalled conventions for current PR
-```
+---
 
-## Cognee lifecycle mapping (the scoring money shot)
-- `remember()` → `memory.remember_review()`: store each merged PR's review comments
-  + post-merge bugs as memory items (tagged by repo/file/rule).
-- `recall()` → `memory.recall_context()`: on new diff, pull top-k relevant past
-  comments/bugs, inject into the review prompt.
-- `improve()`/memify → `memory.reinforce()`: when a recalled pattern matches a new
-  finding, reinforce it (raise weight / re-cognify).
-- `forget()` → `memory.forget_rule()`: drop a retracted convention.
+## Deployment Plan
+Base app already runs **6 Cloud Run services**. This feature adds a Cognee Cloud
+dependency and rides inside existing services — **no new service for MVP**.
 
-## Build sequence (small, committable units — MVP first)
-Branch: `feature/cognee-memory`.
+**Owner: Vasu** (memory layer). Jatin owns dashboard redeploy only if the stretch ships.
 
-1. **Adapter skeleton + sim** — `integrations/cognee/{interface,simulator,factory}.py`
-   + `fixtures/team_history.json`. Sim = deterministic keyword/embedding match
-   (reuse `storage/embeddings.py`). Unit test roundtrip. ✅ remember/recall/forget work offline.
-2. **memory.py glue** — `recall_context(diff)->str` and `remember_review(...)`.
-   Test with sim. ✅
-3. **Wire into review** — `review.py` recalls before reviewing; `prompt.py` gains
-   `{team_memory}`. Test: recalled convention appears in the prompt/output. ✅
-4. **remember on merge** — `cycle.py` (or a script) calls `remember_review` after a
-   merged PR. Test roundtrip: review PR#2 surfaces a lesson learned from PR#1. ✅
-   ← **This is the MVP demo: memory learned in one PR changes the next review.**
-5. **real Cognee adapter** — `real.py` over the cognee SDK, Gemini-backed. Smoke
-   test one remember→recall against local Cognee. Flip `SENTINEL_MEMORY_MODE=real`.
-6. **improve() + forget()** — `reinforce()` and `forget_rule()` paths + tests.
-   Rounds out the full lifecycle for the "Best Use of Cognee" score.
+### A. Same-day demo path (recommended — lowest risk)
+1. `pip install cognee` into the venv; append `cognee` to `requirements.txt`.
+2. Claim `COGNEE-35`; create Cognee Cloud account → API key + dataset.
+3. Local `.env`: `SENTINEL_MEMORY_MODE=real`, `COGNEE_API_KEY=...`,
+   `COGNEE_DATASET=sentinel_team_memory`. Point Cognee's LLM at the existing Gemini key.
+4. Seed once: run the seed script → `remember()` every `team_history.json` item into Cognee.
+5. Run locally: `scripts/run_code_review.py <PR#2 commit>` (or the gateway service) →
+   confirm the review flags the remembered bug, citing team history.
+   **This is the demo — no Cloud Run redeploy needed.**
 
-### Stretch (only if time before cutoff)
-- Merge webhook auto-remember (`webhook_gateway`).
-- Dashboard MemoryPanel: show "what the reviewer remembered" for the current PR.
-- README section + 60-sec demo script (presentation score).
+### B. Cloud Run path (stretch — if time and judges want a live URL)
+1. Rebuild the backend image with `cognee` in `requirements.txt`.
+2. Store the Cognee key in **Secret Manager** (never bake into the image):
+   `gcloud secrets create COGNEE_API_KEY --data-file=-`.
+3. Update the affected service(s) — at minimum `sentinelai-gateway` (runs the
+   code_guardian cycle + remember hook):
+   `gcloud run services update sentinelai-gateway \
+      --update-env-vars SENTINEL_MEMORY_MODE=real,COGNEE_DATASET=sentinel_team_memory \
+      --update-secrets COGNEE_API_KEY=COGNEE_API_KEY:latest`
+4. `gcloud run deploy sentinelai-gateway` (+ `sentinelai-dashboard-api` /
+   `sentinelai-dashboard` only if MemoryPanel stretch shipped).
+5. Seed the Cognee Cloud dataset once (same seed script, run against prod creds).
+6. Verify: POST the PR#2 scenario to the deployed gateway → emitted Signal / MR note
+   shows recalled memory. Cognee smoke against the cloud dataset.
+
+### Rollback / demo safety
+- `SENTINEL_MEMORY_MODE=sim` instantly falls back to the offline JSON memory (no
+  Cognee, no network). Keep it as the escape hatch if Cognee Cloud is flaky mid-demo —
+  the review still runs, just without live-cloud memory.
+
+---
 
 ## Verification
-- `tests/test_code_memory.py`: sim remember/recall/forget roundtrip; review injects
-  recalled context; reinforce raises relevance; forget removes.
-- Reproduce the demo: seed `team_history.json` with a PR#1 bug ("N+1 query"), review
-  PR#2 with the same pattern → reviewer flags it citing the remembered history.
-- `real` smoke: one remember→recall against a live Cognee instance.
+- **Unit (offline):** `pytest tests/test_code_memory.py` on `memory_mode=sim`.
+- **MVP end-to-end (demo):** `memory_mode=real` (Cognee Cloud). Seed history, review
+  PR#2 → flags the remembered pattern citing history; PR#1 cold did NOT → proves
+  memory, not the model, caught it.
+- **Cognee smoke:** one `remember`→`recall` against Cognee Cloud returns the item.
+- Full `pytest` → no regression in existing pillars.
 
-## Demo story (60 sec)
-1. Review PR#1 cold — reviewer gives generic feedback, a bug slips through.
-2. Merge; post-merge the bug is found → `remember()` it.
-3. Review PR#2 with the same pattern → reviewer **recalls** PR#1's lesson and flags
-   it *before* merge, citing the team's own history. "It learned. It didn't forget."
-
-## Open questions for user
-- Target track: Open Source (self-hosted Cognee) or Cognee Cloud (iPhone)? Or both via mode?
-- MVP cutoff: how far down the sequence must we get before you submit today?
-- Real GitLab/GitHub PRs for the demo, or the seeded sim scenario (safer)?
+## Coordination
+- Single branch `feature/cognee-memory`, clean file ownership. Phase-0 shared files
+  (models/config/interface) all Vasu, first. Commit small + push often.
+- Seams: `MemoryItem` shape (Phase 0), `team_history.json` content, prompt wording.
+- Commit identity locked to personal (pandeyVasu); Jatin commits from his own machine/identity.
