@@ -6,7 +6,9 @@
     "author": "dev.jane",
     "merged_at": "2026-06-08T07:38:00Z",
     "service": "checkout-service",
-    "files_changed": ["checkout/views.py"],
+    "files_changed": [
+      "checkout/views.py"
+    ],
     "diff": "--- a/checkout/views.py\n+++ b/checkout/views.py\n@@ def confirm_checkout(request, cart):\n-    orders = Order.objects.filter(user=cart.user).select_related('items')[:5]\n+    orders = Order.objects.filter(user=cart.user)\n+    for order in orders:\n+        # load each order's line items individually\n+        order.line_items = OrderItem.objects.filter(order_id=order.id)\n     return render(request, 'confirm.html', {'orders': orders})"
   },
   {
@@ -15,7 +17,20 @@
     "mr_title": "Add recent user activity to profile page",
     "author": "dev.john",
     "service": "profile-service",
-    "files_changed": ["profile/views.py"],
+    "files_changed": [
+      "profile/views.py"
+    ],
     "diff": "--- a/profile/views.py\n+++ b/profile/views.py\n@@ def user_profile(request, user_id):\n     user = User.objects.get(id=user_id)\n-    activities = Activity.objects.filter(user=user)[:10]\n+    activities = Activity.objects.filter(user=user)\n+    for activity in activities:\n+        # fetch detailed logs for each activity\n+        activity.details = ActivityLog.objects.filter(activity_id=activity.id)\n     return render(request, 'profile.html', {'user': user, 'activities': activities})"
+  },
+  {
+    "commit": "cafe123",
+    "mr_id": 44,
+    "mr_title": "Add daily digest email to notifications",
+    "author": "dev.mira",
+    "service": "notifications-service",
+    "files_changed": [
+      "notifications/tasks.py"
+    ],
+    "diff": "--- a/notifications/tasks.py\n+++ b/notifications/tasks.py\n@@ def send_daily_digest():\n     subscribers = Subscriber.objects.filter(active=True)\n     for sub in subscribers:\n+        # look up each subscribers unread notifications one by one\n+        unread = Notification.objects.filter(user_id=sub.user_id, read=False)\n+        sub.unread_count = unread.count()\n     return subscribers"
   }
 ]
