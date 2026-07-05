@@ -25,9 +25,9 @@ npm-debug.log*
 # Playwright MCP scratch shots (local verification only)
 .playwright-mcp/
 
-# Old Google Cloud Rapid hackathon artifacts — untracked, kept local on disk.
-# (context-wemakedevs/ stays tracked — that's the WeMakeDevs / Cognee work.)
+# Local planning/research context — untracked, kept local on disk.
 context/
+context-wemakedevs/
 /Google Cloud Rapid Agent Hackathon.docx
 /SentinelAI-Implementation-Plan.docx
 .gcloudignore
