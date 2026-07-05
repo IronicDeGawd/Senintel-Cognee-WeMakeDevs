@@ -42,3 +42,5 @@ out/incident_kb.json
 out/signals.json
 out/team_memory.json
 out/eval_trends.json
+# Per-run review notes emitted by scripts/run_code_review.py (throwaway).
+out/mr_note_*.md

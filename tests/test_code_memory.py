@@ -3,12 +3,22 @@ memory_mode defaults to sim and sim embeddings are deterministic, so no network
 and no API spend.
 """
 
+import pytest
+
 from integrations.cognee.factory import get as get_cognee
 from integrations.cognee.simulator import CogneeSimulator
 from shared.config import settings
 from shared.models import Finding, MemoryItem, MRReview, Severity
 
 from agents.sentinel.pillars.code_guardian.memory import recall_context, remember_review
+
+
+@pytest.fixture(autouse=True)
+def _force_sim_memory(monkeypatch):
+    """This suite is offline-only. A local .env may set SENTINEL_MEMORY_MODE=real,
+    which would route get_cognee() to the networked Cognee backend and hang. Pin
+    sim so the deterministic JSON+embeddings path is always used."""
+    monkeypatch.setattr(settings, "memory_mode", "sim")
 
 
 def _item(rule: str, comment: str, file: str | None = "app/serializers.py") -> MemoryItem:
