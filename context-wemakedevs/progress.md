@@ -27,9 +27,13 @@
   hook in `cycle.py`; Cognee Cloud adapter `real.py`; `.env.example`, `requirements.txt`
   (cognee), `.gitignore` fix. `tests/test_code_memory.py` (7 tests).
   **Verified: full suite 149 passed, no regression.** venv `.venv` created + installed.
-- **Left for Vasu (needs creds):** claim `COGNEE-35`, `pip install cognee`, set
-  `.env` (`SENTINEL_MEMORY_MODE=real`, `COGNEE_API_KEY`), seed `team_history.json`
-  into Cognee Cloud, run the live remember→recall smoke.
+- **Vasu real-backend wiring DONE:** COGNEE-35 claimed, `cognee` 1.2.2 installed,
+  `.env` set, `scripts/seed_team_memory.py` built. Cognee LLM+embeddings pointed at
+  Vertex AI (gcloud ADC). Windows MAX_PATH fix (relocate local store to `C:/cognee`).
+  `cognee.serve()` wired for Cloud.
+  **LOCAL Cognee VERIFIED WORKING:** seed builds a 33-node graph, recall returns the
+  N+1 lesson, MVP demo (review PR#2 `def5678`) flags the N+1 citing memory. Running
+  on `SENTINEL_MEMORY_MODE=real` with `COGNEE_SERVICE_URL` blank (local self-hosted).
 - **Track J (Jatin) DONE:** scenario fixtures, seed content, README + demo script,
   stretch dashboard MemoryPanel (frontend built with rich aesthetics, timestamps, sources, `useMemory` hook implemented, backend `/memory/recall` endpoint wired).
 
@@ -45,7 +49,16 @@
 - 2026-07-05 — Scaffolded `context-wemakedevs/`.
 
 ## Known Issues
-- (none yet)
+- **Cognee Cloud recall returns empty (local works).** With `COGNEE_SERVICE_URL` set,
+  `cognee.serve()` connects and `remember()` succeeds, but `recall()` returns 0 hits
+  (even ~30s later, so not just eventual consistency). `forget()` 422s and `cognify`
+  needed an explicit `datasets=[...]` (fixed). Likely a Cloud dataset/query-shape
+  mismatch needing the exact Cloud API. **Decision: ship on LOCAL** (Open Source
+  track) — fully verified. Cloud path is wired; blank `COGNEE_SERVICE_URL` = local.
+  Re-enable the URL in `.env` to retry Cloud (iPhone track) with more time.
+- Cognee recall is slow (~40s local). For a live demo: pre-warm once, keep
+  `SENTINEL_MEMORY_MODE=sim` as an instant offline fallback.
+- One Vertex embedding call intermittently 422s then retries; graph recall unaffected.
 
 ## TODO / Backlog
 - [ ] Confirm WeMakeDevs hackathon: track, theme, rules, deadline, judging.
