@@ -1,0 +1,24 @@
+(sentinel_site) {
+	encode gzip
+
+	handle_path /api/* {
+		reverse_proxy 127.0.0.1:8100 {
+			transport http {
+				read_timeout 180s
+			}
+		}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}
+
+sentinel-aplus.parakramlabs.com {
+	tls /etc/caddy/certs/sentinel-aplus.parakramlabs.com.pem /etc/caddy/certs/sentinel-aplus.parakramlabs.com.key
+	import sentinel_site
+}
+
+SSLIP_PLACEHOLDER {
+	import sentinel_site
+}
