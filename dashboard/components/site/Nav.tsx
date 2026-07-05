@@ -21,7 +21,7 @@ export function Nav({ trail }: { trail?: string }) {
 
         <nav className="flex items-center gap-1 sm:gap-2">
           <a
-            href="https://github.com/pandeyVasu/Senintel-Cognee-WeMakeDevs"
+            href="https://github.com/IronicDeGawd/Senintel-Cognee-WeMakeDevs"
             target="_blank"
             rel="noreferrer"
             className="mono hidden text-[0.7rem] uppercase tracking-[0.2em] text-ink-muted hover:text-ink sm:inline-flex items-center gap-2 px-3 py-2"

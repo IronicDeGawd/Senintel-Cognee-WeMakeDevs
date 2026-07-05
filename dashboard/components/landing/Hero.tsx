@@ -51,7 +51,7 @@ export function Hero() {
             <span aria-hidden>→</span>
           </Link>
           <a
-            href="https://github.com/pandeyVasu/Senintel-Cognee-WeMakeDevs"
+            href="https://github.com/IronicDeGawd/Senintel-Cognee-WeMakeDevs"
             target="_blank"
             rel="noreferrer"
             className="mono inline-flex items-center gap-2 rounded-pill border border-line-strong px-6 py-4 text-[0.7rem] uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
