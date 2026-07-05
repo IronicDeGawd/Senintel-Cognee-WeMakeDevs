@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*-key.json
+service-account*.json
+
+# Node / Next.js
+node_modules/
+dashboard/.next/
+dashboard/out/
+dashboard/build/
+npm-debug.log*
+
+# Playwright MCP scratch shots (local verification only)
+.playwright-mcp/
+
+# Context tracked in this repo (shared research/plan for the team)
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local data
+data/
+*.log
+out/incident_kb.json   # runtime KB state; out/briefing.md is the tracked artifact
+out/signals.json       # D1 runtime Signal stream (sim mode)

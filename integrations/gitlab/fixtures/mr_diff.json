@@ -1,0 +1,10 @@
+{
+  "commit": "abc1234",
+  "mr_id": 42,
+  "mr_title": "Show full order history on checkout confirmation",
+  "author": "dev.jane",
+  "merged_at": "2026-06-08T07:38:00Z",
+  "service": "checkout-service",
+  "files_changed": ["checkout/views.py"],
+  "diff": "--- a/checkout/views.py\n+++ b/checkout/views.py\n@@ def confirm_checkout(request, cart):\n-    orders = Order.objects.filter(user=cart.user).select_related('items')[:5]\n+    orders = Order.objects.filter(user=cart.user)\n+    for order in orders:\n+        # load each order's line items individually\n+        order.line_items = OrderItem.objects.filter(order_id=order.id)\n     return render(request, 'confirm.html', {'orders': orders})"
+}

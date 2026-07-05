@@ -1,0 +1,44 @@
+# Agent / LLM
+google-adk>=1.32
+google-genai
+
+# Config / models
+pydantic
+pydantic-settings
+python-dotenv
+
+# MCP transport (stdio MCP servers)
+mcp
+
+# Services (used by pillar services later; shared deps live here)
+fastapi
+uvicorn
+httpx
+
+# Resilience (Gemini 503 retry, MCP connect retry — spike findings)
+tenacity
+
+# P2-8 self-observability: ADK OTel traces -> Dynatrace OTLP.
+# Pin OTel to 1.41.1 / 0.62b1 to satisfy google-adk's <=1.41.1 ceiling.
+openinference-instrumentation-google-adk
+opentelemetry-exporter-otlp-proto-http==1.41.1
+opentelemetry-api==1.41.1
+opentelemetry-sdk==1.41.1
+opentelemetry-semantic-conventions==0.62b1
+opentelemetry-instrumentation==0.62b1
+
+# P2-3 / D1 / D2 storage — Firestore-backed incident KB + Signal stream.
+# Required by storage/incident_kb.FirestoreKB + storage/signal_store.FirestoreSignalStore
+# whenever any service runs with SENTINEL_KB_MODE=real or SENTINEL_SIGNAL_STORE_MODE=real
+# (dashboard_api always does).
+google-cloud-firestore
+
+# Dev / test
+pytest
+pytest-asyncio
+ruff
+
+# NOTE (append-only): pillars add their own storage/partner libs here, e.g.
+#   google-cloud-bigquery / google-cloud-aiplatform
+#   slack_sdk            (P2 delivery)
+#   arize-phoenix        (P3 eval)

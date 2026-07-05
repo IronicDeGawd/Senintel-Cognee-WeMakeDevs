@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* SentinelAI — Operations terminal × editorial poster
+ * Palette: deep slate + violet accent + status colors
+ * Type: Instrument Serif (display, italic) / Geist Sans (body) / JetBrains Mono (numerics)
+ */
+
+@theme inline {
+  /* Surfaces */
+  --color-bg: #0a0e10;
+  --color-bg-raised: #11161a;
+  --color-bg-card: #161c22;
+  --color-bg-card-elev: #1b232a;
+  --color-bg-light: #f6f5f0;
+  --color-bg-light-2: #ecebe4;
+
+  /* Ink */
+  --color-ink: #f3efe6;
+  --color-ink-muted: #a4adb3;
+  --color-ink-dim: #818c96;
+  --color-ink-faint: #3a4148;
+  --color-ink-dark: #0a0e10;
+  --color-ink-dark-2: #2a3138;
+
+  /* Borders */
+  --color-line: #232c33;
+  --color-line-strong: #3a444d;
+  --color-line-light: #d8d4c5;
+
+  /* Accent — violet pulse (chosen track: Dynatrace) */
+  --color-accent: #a78bfa;
+  --color-accent-dim: #7c5fd1;
+  --color-accent-soft: #1a1426;
+
+  /* Status */
+  --color-ok: #6ee7a8;
+  --color-warn: #ffb547;
+  --color-crit: #ff5d6c;
+  --color-ok-bg: #0e1d18;
+  --color-warn-bg: #221a0e;
+  --color-crit-bg: #251215;
+
+  /* Type families */
+  --font-display: var(--font-instrument-serif);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Spacing scale (8pt) */
+  --spacing: 0.25rem;
+
+  /* Radii */
+  --radius-card: 1.5rem;
+  --radius-card-lg: 2rem;
+  --radius-pill: 999px;
+  --radius-tag: 0.5rem;
+}
+
+/* Resets + base */
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 400;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display headings — Instrument Serif italic by default */
+.display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.display-up {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-feature-settings: "ss01", "cv01";
+}
+
+.eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+/* Hairline grid for poster sections */
+.hairgrid {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.hairgrid-soft {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Subtle scan-line / phosphor texture for hero numbers */
+.scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(167, 139, 250, 0.06) 0px,
+    rgba(167, 139, 250, 0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Live pulse */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.45; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee {
+  animation: marquee 60s linear infinite;
+}
+
+/* Reveal */
+@keyframes rise {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.rise {
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.rise-delay-1 { animation-delay: 0.08s; }
+.rise-delay-2 { animation-delay: 0.16s; }
+.rise-delay-3 { animation-delay: 0.24s; }
+.rise-delay-4 { animation-delay: 0.32s; }
+.rise-delay-5 { animation-delay: 0.40s; }
+
+/* Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-ink-dark);
+}
+
+/* Tabular numerics by default for mono */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide scrollbars on intentionally swipeable strips */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* --- Depth system ------------------------------------------------------- */
+
+/* Radial accent bloom — section background glow */
+.glow-accent {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 0%,
+    rgba(167, 139, 250, 0.12),
+    transparent 70%
+  );
+}
+
+/* Layered card surface: faint top-edge highlight + soft shadow */
+.card-depth {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 30%),
+    var(--color-bg-card);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 12px 32px -16px rgba(0, 0, 0, 0.55);
+}
+
+/* 1px gradient ring (line-strong fading into accent at top) */
+.gradient-border {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-accent) 35%, var(--color-line-strong)),
+    var(--color-line) 60%
+  );
+}

@@ -1,0 +1,43 @@
+{
+  "totalCount": 2,
+  "problems": [
+    {
+      "problemId": "-1234567890123456789_1717848000000V2",
+      "displayId": "P-2506081",
+      "title": "Response time degradation",
+      "severityLevel": "PERFORMANCE",
+      "status": "OPEN",
+      "impactLevel": "SERVICE",
+      "startTime": "2026-06-08T07:42:00Z",
+      "affectedEntities": [
+        { "entityId": "SERVICE-0AB12CD34EF56789", "name": "checkout-service" }
+      ],
+      "rootCauseEntity": { "entityId": "SERVICE-0AB12CD34EF56789", "name": "checkout-service" },
+      "evidenceDetails": {
+        "metric": "service.response.time",
+        "baselineMs": 180,
+        "currentMs": 2400,
+        "note": "p95 latency rose ~13x starting 07:40, coincident with checkout-service deploy"
+      }
+    },
+    {
+      "problemId": "-9876543210987654321_1717848300000V2",
+      "displayId": "P-2506082",
+      "title": "Increased database connection pool saturation",
+      "severityLevel": "RESOURCE_CONTENTION",
+      "status": "OPEN",
+      "impactLevel": "INFRASTRUCTURE",
+      "startTime": "2026-06-08T07:43:00Z",
+      "affectedEntities": [
+        { "entityId": "PROCESS_GROUP-1122334455667788", "name": "orders-postgres" }
+      ],
+      "rootCauseEntity": { "entityId": "SERVICE-0AB12CD34EF56789", "name": "checkout-service" },
+      "evidenceDetails": {
+        "metric": "db.pool.active_connections",
+        "baseline": 12,
+        "current": 98,
+        "note": "connection pool near max; query volume from checkout-service up 8x"
+      }
+    }
+  ]
+}

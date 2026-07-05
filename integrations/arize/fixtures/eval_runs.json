@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "suite": "checkout-llm",
+    "hallucination_rate": 0.04,
+    "drift": 0.0
+  },
+  "threshold": 0.1,
+  "runs": {
+    "checkout-llm-v1": {
+      "hallucination_rate": 0.06,
+      "drift": 0.03
+    },
+    "checkout-llm-v2": {
+      "hallucination_rate": 0.22,
+      "drift": 0.18
+    }
+  },
+  "default": {
+    "hallucination_rate": 0.05,
+    "drift": 0.02
+  }
+}
