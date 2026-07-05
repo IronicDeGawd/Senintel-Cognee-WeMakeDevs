@@ -5,31 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SentinelAI x Cognee - Team Memory Graph</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Geist:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#060912;--surface:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--text:#e8eaf0;--muted:#6b7280;--accent:#7c6fff;--accent2:#00e5ff;--critical:#ff4d6d;--high:#ff8c42;--medium:#ffd166;--info:#4cc9f0;--ok:#06d6a0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow:hidden}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,111,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+    :root{--bg:#0a0e10;--surface:#161c22;--border:#232c33;--text:#f3efe6;--muted:#818c96;--accent:#a78bfa;--accent2:#7c5fd1;--critical:#ff5d6c;--high:#ffb547;--medium:#d9c26f;--info:#c4b5fd;--ok:#6ee7a8}
+    body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;min-height:100vh;overflow:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(167,139,250,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(167,139,250,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
     .layout{display:grid;grid-template-columns:360px 1fr;grid-template-rows:64px 1fr;height:100vh;position:relative;z-index:1}
-    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:rgba(6,9,18,0.9);backdrop-filter:blur(12px)}
+    header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:rgba(10,14,16,0.9);backdrop-filter:blur(12px)}
     .logo{display:flex;align-items:center;gap:12px}
     .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
-    .logo-text{font-size:15px;font-weight:600}.logo-text span{color:var(--accent)}
+    .logo-text{font-family:'Instrument Serif',serif;font-style:italic;font-size:19px;font-weight:400}.logo-text span{color:var(--accent)}
     .header-right{display:flex;align-items:center;gap:16px}
     .status-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
     .status-label{font-size:12px;color:var(--muted)}
-    .dataset-badge{background:rgba(124,111,255,0.15);border:1px solid rgba(124,111,255,0.3);color:var(--accent);font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:20px}
-    .sidebar{border-right:1px solid var(--border);background:rgba(6,9,18,0.6);backdrop-filter:blur(8px);display:flex;flex-direction:column;overflow:hidden}
+    .dataset-badge{background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);color:var(--accent);font-size:11px;font-family:'JetBrains Mono',monospace;padding:4px 10px;border-radius:20px}
+    .sidebar{border-right:1px solid var(--border);background:rgba(10,14,16,0.6);backdrop-filter:blur(8px);display:flex;flex-direction:column;overflow:hidden}
     .sidebar-section{padding:18px;border-bottom:1px solid var(--border)}
     .sidebar-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
     .search-box{position:relative}
-    .search-box input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:10px 14px 10px 34px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
-    .search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,111,255,0.15)}
+    .search-box input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;padding:10px 14px 10px 34px;color:var(--text);font-size:13px;font-family:'Geist',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+    .search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(167,139,250,0.15)}
     .search-box input::placeholder{color:var(--muted)}
     .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
-    .recall-btn{margin-top:10px;width:100%;background:linear-gradient(135deg,var(--accent),#5b4de8);border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .1s;font-family:'Inter',sans-serif}
+    .recall-btn{margin-top:10px;width:100%;background:linear-gradient(135deg,var(--accent),#5b4de8);border:none;border-radius:8px;padding:10px;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .1s;font-family:'Geist',sans-serif}
     .recall-btn:hover{opacity:.9;transform:translateY(-1px)}.recall-btn:active{transform:translateY(0)}.recall-btn:disabled{opacity:.5;cursor:not-allowed}
     .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
@@ -39,7 +39,7 @@
     .memory-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
     .memory-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
     .memory-card.critical::before{background:var(--critical)}.memory-card.high::before{background:var(--high)}.memory-card.medium::before{background:var(--medium)}.memory-card.info::before,.memory-card.low::before{background:var(--info)}
-    .memory-card:hover{border-color:rgba(124,111,255,.3);background:rgba(124,111,255,.05);transform:translateX(2px)}.memory-card.active{border-color:var(--accent);background:rgba(124,111,255,.1)}
+    .memory-card:hover{border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.05);transform:translateX(2px)}.memory-card.active{border-color:var(--accent);background:rgba(167,139,250,.1)}
     .card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
     .card-rule{font-size:12px;font-weight:600;color:var(--text);line-height:1.3}
     .severity-badge{flex-shrink:0;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;border-radius:20px}
@@ -50,20 +50,20 @@
     .graph-area{position:relative;overflow:hidden}
     #graph-svg{width:100%;height:100%}
     .graph-controls{position:absolute;top:16px;right:16px;display:flex;gap:8px}
-    .ctrl-btn{background:rgba(6,9,18,.85);border:1px solid var(--border);border-radius:8px;padding:7px 13px;color:var(--text);font-size:12px;cursor:pointer;transition:border-color .2s;backdrop-filter:blur(8px)}
+    .ctrl-btn{background:rgba(10,14,16,.85);border:1px solid var(--border);border-radius:8px;padding:7px 13px;color:var(--text);font-size:12px;cursor:pointer;transition:border-color .2s;backdrop-filter:blur(8px)}
     .ctrl-btn:hover{border-color:var(--accent);color:var(--accent)}
     #tooltip{position:absolute;background:rgba(10,13,26,.95);border:1px solid var(--border);border-radius:10px;padding:14px;max-width:280px;pointer-events:none;opacity:0;transition:opacity .15s;backdrop-filter:blur(12px);z-index:100}
     #tooltip.visible{opacity:1}
     .tt-title{font-size:13px;font-weight:600;margin-bottom:6px}.tt-body{font-size:11px;color:var(--muted);line-height:1.5}
-    .legend{position:absolute;bottom:20px;right:20px;background:rgba(6,9,18,.88);border:1px solid var(--border);border-radius:10px;padding:14px 16px;backdrop-filter:blur(12px)}
+    .legend{position:absolute;bottom:20px;right:20px;background:rgba(10,14,16,.88);border:1px solid var(--border);border-radius:10px;padding:14px 16px;backdrop-filter:blur(12px)}
     .legend-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
     .legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);margin-bottom:6px}
     .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-    .loading-overlay{position:absolute;inset:0;background:rgba(6,9,18,.75);display:flex;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(4px);transition:opacity .3s}
+    .loading-overlay{position:absolute;inset:0;background:rgba(10,14,16,.75);display:flex;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(4px);transition:opacity .3s}
     .loading-overlay.hidden{opacity:0;pointer-events:none}
     .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .recall-result{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.2);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--accent2);font-family:'JetBrains Mono',monospace;margin-top:10px;display:none}
+    .recall-result{background:rgba(124,95,209,.05);border:1px solid rgba(124,95,209,.2);border-radius:8px;padding:9px 12px;font-size:11px;color:var(--accent2);font-family:'JetBrains Mono',monospace;margin-top:10px;display:none}
     .empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
     .empty-state .emoji{font-size:32px;margin-bottom:10px}
   </style>
@@ -128,11 +128,11 @@
     </div>
     <div class="legend">
       <div class="legend-title">Node Types</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#7c6fff"></div>Team Hub</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ff4d6d"></div>Critical Bug</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ff8c42"></div>High Severity</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ffd166"></div>Medium</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#4cc9f0"></div>Info / Pattern</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Team Hub</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff5d6c"></div>Critical Bug</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffb547"></div>High Severity</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d9c26f"></div>Medium</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c4b5fd"></div>Info / Pattern</div>
       <div class="legend-item"><div class="legend-dot" style="background:#4ade80;opacity:.8"></div>File / PR Node</div>
     </div>
   </main>
@@ -150,7 +150,7 @@ const FIX = [
   {repo:"payments-service",file:"payments/processor.py",rule:"Always handle async exceptions explicitly",comment:"In PR #51 (commit fa16789), an unhandled promise rejection in the payment processor silently swallowed failed transactions. Users were charged but orders never confirmed. Wrap all async calls in try/except and emit structured error events to the incident queue.",severity:"critical",source:"post_merge_bug",commit:"fa16789",ts:"2026-06-28T08:15:00Z"},
   {repo:"api-gateway",file:"gateway/rate_limiter.py",rule:"Enforce per-user rate limiting on all public endpoints",comment:"PR #55 (commit b2c8901) added a new /checkout/promo endpoint without rate limiting. Within 2 hours of deploy, a bot hit it 40k times causing downstream service saturation. Every public endpoint must go through the RateLimiter middleware before merge.",severity:"high",source:"review",commit:"b2c8901",ts:"2026-07-01T13:45:00Z"}
 ];
-const SC={critical:'#ff4d6d',high:'#ff8c42',medium:'#ffd166',info:'#4cc9f0',low:'#4cc9f0'};
+const SC={critical:'#ff5d6c',high:'#ffb547',medium:'#d9c26f',info:'#c4b5fd',low:'#c4b5fd'};
 let all=[],svg,g,sim;
 
 async function loadMemory(){
@@ -212,17 +212,17 @@ function buildGraph(data){
   const fm=gl.append('feMerge');fm.append('feMergeNode').attr('in','blur');fm.append('feMergeNode').attr('in','SourceGraphic');
   g=svg.append('g');
   const nodes=[],links=[];
-  const hub={id:'hub',type:'hub',label:'SentinelAI\nTeam',color:'#7c6fff',r:28,fx:W/2,fy:H/2};
+  const hub={id:'hub',type:'hub',label:'SentinelAI\nTeam',color:'#a78bfa',r:28,fx:W/2,fy:H/2};
   nodes.push(hub);
   const repos=[...new Set(data.map(d=>d.repo).filter(Boolean))];
   const rMap={};
   repos.forEach((repo,i)=>{
     const a=(2*Math.PI*i/repos.length)-Math.PI/2,dist=Math.min(W,H)*0.2;
-    const n={id:`repo_${repo}`,type:'repo',label:repo,color:'#4cc9f0',r:18,x:W/2+Math.cos(a)*dist,y:H/2+Math.sin(a)*dist};
+    const n={id:`repo_${repo}`,type:'repo',label:repo,color:'#c4b5fd',r:18,x:W/2+Math.cos(a)*dist,y:H/2+Math.sin(a)*dist};
     nodes.push(n);rMap[repo]=n;links.push({source:'hub',target:n.id,strength:.5});
   });
   data.forEach((item,i)=>{
-    const n={id:`mem_${i}`,type:'memory',label:item.rule||'Pattern',color:SC[item.severity]||'#4cc9f0',r:13,data:item,index:i};
+    const n={id:`mem_${i}`,type:'memory',label:item.rule||'Pattern',color:SC[item.severity]||'#c4b5fd',r:13,data:item,index:i};
     nodes.push(n);
     const rn=item.repo?rMap[item.repo]:null;
     links.push({source:rn?rn.id:'hub',target:n.id,strength:.8});
@@ -244,7 +244,7 @@ function buildGraph(data){
     .on('mouseenter',showTT).on('mousemove',moveTT).on('mouseleave',hideTT)
     .on('click',(e,d)=>{if(d.type==='memory')focusNode(d.index);});
   node.append('circle').attr('r',d=>d.r||8).attr('fill',d=>d.color+'22').attr('stroke',d=>d.color).attr('stroke-width',d=>d.type==='hub'?2.5:1.5).attr('filter',d=>d.type!=='file'?'url(#glow)':null).attr('opacity',d=>d.opacity||1);
-  node.filter(d=>d.type==='hub').append('circle').attr('r',12).attr('fill','#7c6fff').attr('opacity',.6);
+  node.filter(d=>d.type==='hub').append('circle').attr('r',12).attr('fill','#a78bfa').attr('opacity',.6);
   node.filter(d=>d.type!=='memory').append('text').attr('dy',d=>(d.r||8)+14).attr('text-anchor','middle').attr('fill','rgba(255,255,255,0.6)').attr('font-size',d=>d.type==='hub'?10:9).attr('font-family','Inter,sans-serif').text(d=>d.label.length>18?d.label.slice(0,15)+'...':d.label);
   node.filter(d=>d.type==='memory').append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size','9px').attr('fill',d=>d.color).text(d=>{const s=d.data?.severity;return s==='critical'?'!':s==='high'?'^':'*';});
   const hs=node.filter(d=>d.type==='hub');
