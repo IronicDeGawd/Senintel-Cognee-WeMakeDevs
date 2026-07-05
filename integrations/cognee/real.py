@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from pathlib import Path
 
 from shared.config import settings
 from shared.logging import get_logger
@@ -66,6 +67,21 @@ def _configure() -> None:
         os.environ.setdefault("EMBEDDING_MODEL", f"vertex_ai/{settings.embedding_model}")
         os.environ.setdefault("EMBEDDING_API_KEY", "vertex-adc")
         os.environ.setdefault("EMBEDDING_DIMENSIONS", "768")
+
+    # On Windows, Cognee's local LanceDB store buries files under the venv and
+    # blows past the 260-char MAX_PATH limit. Relocate its system/data roots to a
+    # short path so writes succeed. No-op on Linux (Cloud Run) where paths are fine.
+    if os.name == "nt":
+        try:
+            import cognee
+
+            root = Path(os.environ.get("COGNEE_LOCAL_ROOT", "C:/cognee"))
+            (root / "system").mkdir(parents=True, exist_ok=True)
+            (root / "data").mkdir(parents=True, exist_ok=True)
+            cognee.config.system_root_directory(str(root / "system"))
+            cognee.config.data_root_directory(str(root / "data"))
+        except Exception:
+            log.exception("could not relocate cognee local root (non-fatal)")
 
 
 def _item_text(item: MemoryItem) -> str:
