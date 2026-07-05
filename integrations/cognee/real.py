@@ -29,16 +29,43 @@ log = get_logger(__name__)
 
 
 def _configure() -> None:
-    """Push credentials/LLM choice into the env Cognee reads. setdefault so an
-    already-exported value (e.g. a real .env) always wins."""
+    """Push credentials + LLM/embedding choice into the env Cognee reads. setdefault
+    so an already-exported value (e.g. a real .env) always wins.
+
+    Cognee (via LiteLLM) needs BOTH an LLM and an embedder. It defaults the embedder
+    to OpenAI even with a Gemini LLM, so we set both explicitly.
+
+    Two LLM paths:
+      1. GEMINI_API_KEY set -> Gemini via AI Studio (simplest).
+      2. else Vertex AI via gcloud ADC (no API key) -> LiteLLM vertex_ai/ provider,
+         using GOOGLE_CLOUD_PROJECT/LOCATION + Application Default Credentials.
+    """
     if settings.cognee_api_key:
         os.environ.setdefault("COGNEE_API_KEY", settings.cognee_api_key)
     if settings.cognee_service_url:
         os.environ.setdefault("COGNEE_SERVICE_URL", settings.cognee_service_url)
+
     if settings.gemini_api_key:
+        # Path 1: Gemini AI Studio key.
         os.environ.setdefault("LLM_PROVIDER", "gemini")
         os.environ.setdefault("LLM_MODEL", f"gemini/{settings.gemini_model}")
         os.environ.setdefault("LLM_API_KEY", settings.gemini_api_key)
+        os.environ.setdefault("EMBEDDING_PROVIDER", "gemini")
+        os.environ.setdefault("EMBEDDING_MODEL", "gemini/text-embedding-004")
+        os.environ.setdefault("EMBEDDING_API_KEY", settings.gemini_api_key)
+        os.environ.setdefault("EMBEDDING_DIMENSIONS", "768")
+    elif settings.google_cloud_project:
+        # Path 2: Vertex AI via gcloud ADC. LiteLLM reads VERTEXAI_* + ADC creds.
+        os.environ.setdefault("VERTEXAI_PROJECT", settings.google_cloud_project)
+        os.environ.setdefault("VERTEXAI_LOCATION", settings.google_cloud_location)
+        os.environ.setdefault("LLM_PROVIDER", "custom")
+        os.environ.setdefault("LLM_MODEL", f"vertex_ai/{settings.gemini_model}")
+        # Cognee's config often requires a non-empty LLM_API_KEY; Vertex ignores it.
+        os.environ.setdefault("LLM_API_KEY", "vertex-adc")
+        os.environ.setdefault("EMBEDDING_PROVIDER", "custom")
+        os.environ.setdefault("EMBEDDING_MODEL", f"vertex_ai/{settings.embedding_model}")
+        os.environ.setdefault("EMBEDDING_API_KEY", "vertex-adc")
+        os.environ.setdefault("EMBEDDING_DIMENSIONS", "768")
 
 
 def _item_text(item: MemoryItem) -> str:
