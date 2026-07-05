@@ -16,6 +16,7 @@ improve()/forget() are best-effort (getattr) so a signature drift can't crash a 
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
 from shared.config import settings
@@ -85,10 +86,8 @@ class CogneeReal(CogneeIntegration):
         for r in raw:
             text = getattr(r, "text", None)
             if not text:
-                continue  # Skip empty graph completion results that break the UI
-                
+                continue  # skip empty graph-completion results
             try:
-                import json
                 data = json.loads(text)
                 items.append(MemoryItem(**data))
             except Exception:

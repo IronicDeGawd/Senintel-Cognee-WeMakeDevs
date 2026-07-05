@@ -30,8 +30,11 @@ class GitLabSimulator(GitLabIntegration):
             for pr in data:
                 if commit and commit in (pr["commit"], pr["commit"][:7]):
                     return pr
-            return {"error": f"no merge request found for commit {commit}"}
-        
+            return {
+                "error": f"no merge request found for commit {commit}",
+                "known_commit": data[0]["commit"] if data else None,
+            }
+
         if commit and commit not in (data["commit"], data["commit"][:7]):
             return {
                 "error": f"no merge request found for commit {commit}",

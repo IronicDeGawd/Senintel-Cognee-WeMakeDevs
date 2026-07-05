@@ -41,3 +41,4 @@ data/
 out/incident_kb.json
 out/signals.json
 out/team_memory.json
+out/eval_trends.json

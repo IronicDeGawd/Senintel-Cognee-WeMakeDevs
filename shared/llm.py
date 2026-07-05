@@ -110,42 +110,18 @@ def generate_json(prompt: str, schema: type[T], model: str | None = None) -> T:
     Returns:
         A validated instance of `schema`.
     """
-    try:
-        client = _get_client()
-        target = model or settings.gemini_model
-        resp = client.models.generate_content(
-            model=target,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=schema,
-            ),
-        )
-        parsed = getattr(resp, "parsed", None)
-        if isinstance(parsed, schema):
-            return parsed
-        return schema.model_validate_json(resp.text or "{}")
-    except Exception as e:
-        log.warning(f"LLM call failed ({e}), using fallback mock for demo.")
-        if schema.__name__ == "Incident":
-            from shared.models import Incident
-            return Incident(
-                root_cause_service="checkout-service",
-                summary="High latency observed in checkout-service immediately following a recent code change.",
-                related_deploy=None
-            )
-        elif schema.__name__ == "MRReview":
-            from shared.models import MRReview, Finding, Severity
-            return MRReview(
-                mr_id=42,
-                commit="abc1234",
-                findings=[
-                    Finding(
-                        file="checkout.py",
-                        category="Performance",
-                        message="Potential N+1 query issue found in checkout logic.",
-                        severity=Severity.HIGH,
-                    )
-                ]
-            )
-        raise e
+    client = _get_client()
+    target = model or settings.gemini_model
+    resp = client.models.generate_content(
+        model=target,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=schema,
+        ),
+    )
+    parsed = getattr(resp, "parsed", None)
+    if isinstance(parsed, schema):
+        return parsed
+    # Fallback: validate the raw JSON text ourselves.
+    return schema.model_validate_json(resp.text or "{}")
