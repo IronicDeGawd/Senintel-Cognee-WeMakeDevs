@@ -9,6 +9,12 @@
 		}
 	}
 
+	handle /graph {
+		root * /home/ubuntu/sentinel
+		rewrite * /cognee-graph.html
+		file_server
+	}
+
 	handle {
 		reverse_proxy 127.0.0.1:3000
 	}
