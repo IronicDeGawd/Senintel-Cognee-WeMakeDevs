@@ -1,7 +1,7 @@
 """P2-2: Production Sentinel RCA + sub-agent. LLM is mocked so the suite stays
 offline/free; the live path is verified separately via scripts/run_briefing.py."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import agents.sentinel.pillars.production_sentinel.rca as rca_mod
 from agents.sentinel.pillars.production_sentinel.agent import build_production_sentinel
@@ -55,4 +55,4 @@ def test_incident_ts_roundtrip_is_serializable():
     inc = _fake_incident()
     payload = inc.model_dump(mode="json")
     assert payload["severity"] == "high"
-    datetime.now(UTC)  # sanity import use
+    datetime.now(timezone.utc)  # sanity import use

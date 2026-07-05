@@ -14,6 +14,7 @@ that mean similar things land close together, so "closeness" = "similarity".
 from __future__ import annotations
 
 import hashlib
+from typing import TypeVar
 import math
 import re
 
@@ -74,7 +75,8 @@ def cosine(a: list[float], b: list[float]) -> float:
     return dot / (na * nb)
 
 
-def most_similar[T](
+T = TypeVar("T")
+def most_similar(
     query: list[float], candidates: list[tuple[T, list[float]]]
 ) -> tuple[T, float] | None:
     """Return the (item, score) whose stored vector is closest to `query`, or

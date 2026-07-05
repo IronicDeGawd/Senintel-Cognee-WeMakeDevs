@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -27,7 +27,7 @@ def _fake_signal() -> Signal:
         status="warning",
         headline="MR !42: 1 finding(s) — 1 high",
         detail={"posted_to": "out/mr_note_42.md"},
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
 
 

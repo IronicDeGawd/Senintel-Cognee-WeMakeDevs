@@ -30,14 +30,14 @@
 - **Left for Vasu (needs creds):** claim `COGNEE-35`, `pip install cognee`, set
   `.env` (`SENTINEL_MEMORY_MODE=real`, `COGNEE_API_KEY`), seed `team_history.json`
   into Cognee Cloud, run the live remember→recall smoke.
-- **Jatin's track (parallel):** scenario fixtures, seed content, README + demo,
-  stretch dashboard MemoryPanel.
+- **Track J (Jatin) DONE:** scenario fixtures, seed content, README + demo script,
+  stretch dashboard MemoryPanel (frontend built with rich aesthetics, timestamps, sources, `useMemory` hook implemented, backend `/memory/recall` endpoint wired).
 
 ## Team split
 - **Vasu (Python/AI):** entire Cognee integration + memory brain (Phase 0, sim + real
   adapters, memory glue, review/cycle wiring, tests, Cognee Cloud creds + seed, deploy).
 - **Jatin (fullstack/genai):** demo scenario fixtures, seed content, prompt tuning,
-  README + demo + submission, stretch dashboard MemoryPanel.
+  README + demo + submission, stretch dashboard MemoryPanel (Completed).
 
 ## Completed
 - 2026-07-05 — Fresh git repo (new history), pushed to `IronicDeGawd/Senintel-Cognee-WeMakeDevs`.

@@ -7,6 +7,7 @@ import { CorrelationPanel } from "@/components/dashboard/CorrelationPanel";
 import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
 import { DriftChart } from "@/components/dashboard/DriftChart";
 import { TriggerPanel } from "@/components/dashboard/TriggerPanel";
+import { MemoryPanel } from "@/components/dashboard/MemoryPanel";
 
 export default function DashboardPage() {
   return (
@@ -15,7 +16,7 @@ export default function DashboardPage() {
       <main className="flex-1">
         <div className="mx-auto max-w-[1440px] px-6 lg:px-10">
           <div className="lg:grid lg:grid-cols-[230px_1fr] lg:gap-10">
-            <SidebarNav />
+            <SidebarNav />  
 
             <div className="min-w-0 py-10">
               <section id="overview" className="scroll-mt-32">
@@ -23,6 +24,13 @@ export default function DashboardPage() {
                 <div className="mt-10">
                   <StatusCards />
                 </div>
+              </section>
+
+              <section
+                id="memory"
+                className="mt-16 scroll-mt-32 border-t border-line pt-12"
+              >
+                <MemoryPanel />
               </section>
 
               <section

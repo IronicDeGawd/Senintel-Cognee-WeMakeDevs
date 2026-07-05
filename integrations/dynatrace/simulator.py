@@ -34,7 +34,7 @@ def _to_problem(raw: dict) -> Problem:
         status=raw.get("status", "OPEN"),
         service=affected[0].get("name", "unknown"),
         root_cause_entity=(raw.get("rootCauseEntity") or {}).get("name"),
-        start_time=datetime.fromisoformat(raw["startTime"]),
+        start_time=datetime.fromisoformat(raw["startTime"].replace("Z", "+00:00")),
         evidence={
             **raw.get("evidenceDetails", {}),
             "severity_level": raw.get("severityLevel"),

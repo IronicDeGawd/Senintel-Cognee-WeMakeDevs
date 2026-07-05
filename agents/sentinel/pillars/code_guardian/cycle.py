@@ -10,7 +10,7 @@ Signal.detail.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from integrations.gitlab.factory import get as get_gitlab
@@ -81,7 +81,7 @@ def run_code_guardian_cycle(commit: str) -> Signal:
             "review": review.model_dump(mode="json"),
             "posted_to": dest,
         },
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
     save_signal(signal)
 

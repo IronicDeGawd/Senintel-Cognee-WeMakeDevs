@@ -3,7 +3,7 @@
 Offline-only — sim writes go to a tmp_path JSON file, real (Firestore) is the
 lazy import path and is exercised by integration smoke against a live tenant."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from shared.models import Signal
 from storage.signal_store import (
@@ -25,7 +25,7 @@ def _signal(
         status=status,
         headline=headline,
         detail={"k": "v"},
-        ts=datetime.now(UTC) - timedelta(minutes=minutes_ago),
+        ts=datetime.now(timezone.utc) - timedelta(minutes=minutes_ago),
     )
 
 

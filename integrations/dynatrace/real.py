@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from shared.config import settings
@@ -166,7 +166,7 @@ class DynatraceReal(DynatraceIntegration):
                 "rootCauseEntity": None,
                 "startTime": r.get("event.start")
                 or r.get("timestamp")
-                or datetime.now(UTC).isoformat(),
+                or datetime.now(timezone.utc).isoformat(),
                 "evidenceDetails": {
                     "description": r.get("event.description"),
                     "category": r.get("event.category"),

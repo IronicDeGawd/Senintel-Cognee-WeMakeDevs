@@ -7,6 +7,7 @@ import type { Status } from "@/lib/types";
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
+  { id: "memory", label: "Team Memory" },
   { id: "correlation", label: "Correlation" },
   { id: "timeline", label: "Timeline" },
   { id: "quality", label: "AI Quality" },

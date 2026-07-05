@@ -1,7 +1,7 @@
 """P2-6: production cycle -> Signal, and the poller HTTP surface. Offline —
 the LLM-heavy steps and delivery are stubbed."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -88,7 +88,7 @@ def test_poller_run_returns_signal(monkeypatch):
         status="warning",
         headline="Checkout latency spike",
         detail={"incident": _incident().model_dump(mode="json")},
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
     monkeypatch.setattr("services.poller.main.run_production_cycle", lambda: fake)
 

@@ -10,15 +10,15 @@ envelope). The dashboard only ever speaks `Signal`. The pillar-specific payload
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from enum import StrEnum
+from datetime import datetime, timezone
+from enum import Enum
 from typing import Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 
-class Severity(StrEnum):
+class Severity(str, Enum):
     INFO = "info"
     LOW = "low"
     MEDIUM = "medium"
@@ -105,5 +105,5 @@ class MemoryItem(BaseModel):
     severity: Severity
     source: Literal["review", "post_merge_bug"]
     commit: str
-    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     id: str = Field(default_factory=lambda: uuid4().hex)

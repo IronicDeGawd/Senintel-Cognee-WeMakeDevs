@@ -9,7 +9,7 @@ specific Incident rides inside Signal.detail.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Literal
 
 from delivery.briefing import deliver_briefing, render_briefing
@@ -76,7 +76,7 @@ def run_production_cycle() -> Signal:
             "delivered_to": dest,
             "notebook": notebook,
         },
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
     save_signal(signal)
     return signal
