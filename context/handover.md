@@ -17,66 +17,47 @@ _Refreshed by hook on `/compact`._
 
 ## Session Notes
 
-**Active task:** P4 dashboard (Next.js), branch `feature/dashboard` (just created
-off main, no commits yet). User asked me NOT to start coding — plan only. Last
-plan written to `context/plan/features/04-dashboard.md`.
+**Active task:** WeMakeDevs "Where's My Context?" hackathon — Cognee-powered AI PR
+reviewer extending the `code_guardian` pillar. **Feature COMPLETE + verified on LOCAL
+Cognee.** Repo `IronicDeGawd/Senintel-Cognee-WeMakeDevs`, working on `main` (team
+converged there). Full status: `context-wemakedevs/progress.md`; plan +
+deployment: `context-wemakedevs/plan/cognee-pr-reviewer.md`.
 
-**Where we are in dashboard plan:** plan locked, branch open, **not yet coding**.
-Next step on user's go: D1 = `storage/signal_store.py` (mirror `incident_kb.py`
-shape, JSON sim + Firestore real) + add `save_signal(signal)` call at end of
-each pillar cycle (P2 cycle.py, P1 cycle.py, eval_runner main.py).
+**What it does:** on review, `recall_context(diff)` pulls team memory into the prompt;
+at cycle end, `remember_review(review)` stores findings. Backend by
+`SENTINEL_MEMORY_MODE`: sim (JSON+local embeddings, tests) | real (Cognee).
 
-**Parallel work by other dev (do NOT touch on this branch):** real Dynatrace +
-Arize integrations per `context/plan/features/05-real-partner-integrations.md`.
-They own `integrations/arize/real.py` (new), `scripts/probe_phoenix.py`,
-`scripts/seed_phoenix.py`, `tests/test_arize_real.py`, Dynatrace OneAgent setup,
-and Cloud Run env flips on poller + eval_runner. Cycle.py edits are the only
-overlap (~1 LOC); coordinate before pushing if both touch the same file.
+**Key files:** `integrations/cognee/{interface,simulator,real,factory}.py`;
+`agents/sentinel/pillars/code_guardian/memory.py` + recall wired into `review.py`
+(prompt concat) + remember hook in `cycle.py`; `MemoryItem` in `shared/models.py`;
+`scripts/seed_team_memory.py`; `tests/test_code_memory.py` (7). 149 tests green.
 
-**Dashboard scope locked (per user picks):**
-- All 6 pieces: status cards, correlation panel, activity timeline, quality
-  drift chart, trigger buttons, architecture SVG.
-- TWO pages: Landing `/` + Dashboard `/dashboard`.
-- Dynatrace pillar shown FIRST in every triad (chosen track).
-- Partner names in plain text labels only (no decorative logos — rules §7B).
-- Storage = Firestore. Host = Vercel. UI = Next.js 15 + Tailwind + shadcn/ui.
-- Backend = new 4th Cloud Run service `services/dashboard_api/main.py` (same
-  image, override command).
+**Exact commands (Windows venv):**
+- Tests: `./.venv/Scripts/python.exe -m pytest -q`
+- Seed + recall smoke: `python scripts/seed_team_memory.py --reset`
+- MVP demo: `python scripts/run_code_review.py def5678` (PR#2 flags N+1 from memory;
+  PR#1 = `abc1234`). Fixtures: `integrations/gitlab/fixtures/mr_diff.json`.
 
-**Live infra in this session (don't redo):**
-- 3 Cloud Run services live: `sentinelai-gateway` (P1 real), `sentinelai-poller`
-  (P2 sim), `sentinelai-eval-runner` (P3 sim). URLs in `progress.md`.
-- GitHub: `IronicDeGawd/Google-Rapid-Hackathon`, main pushed.
-- GitLab webhook registered (id 80763611) → gateway URL. Async cycle returns
-  202; background task posts MR notes.
-- Custom domain `sentinel.parakramlabs.com` deferred (Search Console verify
-  flake — Vercel subdomain is fine for submission).
-- 103 tests green, ruff clean on main.
+**Decisions this session:**
+- Cognee LLM+embeddings via **Vertex AI + gcloud ADC** (not AI Studio); `GEMINI_API_KEY`
+  left blank → `real.py _configure()` takes the Vertex branch.
+- **Windows MAX_PATH fix:** relocate Cognee local store to `C:/cognee` (real.py).
+- **Ship LOCAL** (Open Source track). Cloud parked.
 
-**Secrets / creds (locations only):**
-- `/project/Google-Rapid-Hackathon/.env` (chmod 600, gitignored): GITLAB_TOKEN
-  PAT, GITLAB_WEBHOOK_TOKEN (random), GITLAB_PROBE_COMMIT, GITLAB_PROJECT_ID=83079708,
-  GITLAB_DEMO_MR_IID=1.
-- Secret Manager: `gitlab-pat`, `gitlab-webhook-secret`.
-- `~/.mcp-auth/mcp-remote-0.1.37/*` — GitLab MCP OAuth cache.
-- gcloud account: `parakramlabs.tech@gmail.com`, project
-  `project-8feccae3-bcae-4254-b60`, region `us-central1`.
+**Gotchas / known issues (also in progress.md):**
+- **Cognee Cloud recall returns 0** — `serve()`+`remember()` work, `recall()` empty even
+  30s later; `forget` 422s; `cognify` needs `datasets=[...]` (fixed). `COGNEE_SERVICE_URL`
+  BLANKED in `.env` (URL kept in a comment) → local active. Re-enable to retry Cloud.
+- Recall slow (~40s local) → pre-warm before demo; `SENTINEL_MEMORY_MODE=sim` = instant fallback.
+- One Vertex embedding call intermittently 422s then retries; graph recall unaffected.
 
-**Reproducible commands (no changes this session):**
-- Deploy: `./infra/deploy.sh {gateway|poller|eval_runner|all}` from repo root.
-- Live sim review: `SENTINEL_GL_MODE=sim python scripts/run_code_review.py abc1234`.
-- Live real review: `SENTINEL_GL_MODE=real python scripts/run_code_review.py <sha>`.
-- Trigger live webhook: `cd /project/checkout-service-demo && git commit
-  --allow-empty -m '...' && git push`.
-- Tail gateway logs: `gcloud run services logs tail sentinelai-gateway
-  --region=us-central1 --project=project-8feccae3-bcae-4254-b60`.
-- Run tests: `source .venv/bin/activate && python -m pytest -q`.
+**Creds (.env, gitignored/untracked — never commit):** `SENTINEL_MEMORY_MODE=real`,
+`COGNEE_API_KEY` set (**ROTATE — appeared in session logs**), `GOOGLE_CLOUD_PROJECT=
+project-8feccae3-bcae-4254-b60`, gcloud ADC at `AppData/Roaming/gcloud`.
 
-**Important "don'ts":**
-- Don't drop the Vertex AI default model `gemini-2.5-flash` — covered in
-  `shared/config.py`.
-- Don't proxy the Cloudflare CNAME (must be DNS-only / grey cloud for cert).
-- Don't add partner logos in the dashboard (rules §7B).
-- Don't touch `integrations/arize/real.py` or anything in R1–R9 of
-  `05-real-partner-integrations.md` — owned by other dev.
-- User asked NOT to start dashboard code yet. Wait for explicit go.
+**Jatin (other dev):** merged PR #1 (MemoryPanel + `GET /memory/recall` + fixtures +
+`team_history.json`). Removed his `shared/llm.py` hardcoded mock fallback (broke
+Incident model, killed retry). His Python-downgrade sweep (StrEnum→str,Enum, PEP-695→
+TypeVar) kept — he runs older Python; verified harmless.
+
+**Left (Jatin/submission):** 60s demo video, README section, Google Form.
