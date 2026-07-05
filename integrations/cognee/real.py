@@ -171,7 +171,8 @@ class CogneeReal(CogneeIntegration):
             await _serve_if_cloud()
             fn = getattr(cognee, "cognify", None)
             if fn is not None:
-                await fn()
+                # Cloud cognify requires an explicit dataset; local accepts it too.
+                await fn(datasets=[self._dataset])
 
         try:
             asyncio.run(_run())
@@ -187,8 +188,13 @@ class CogneeReal(CogneeIntegration):
             await _serve_if_cloud()
             forget_fn = getattr(cognee, "forget", None)
             if forget_fn is not None:
-                await forget_fn(dataset_name=target)
-                return
+                # Signature varies (local vs cloud); try the common shapes.
+                for kwargs in ({"datasets": [target]}, {"dataset_name": target}, {}):
+                    try:
+                        await forget_fn(**kwargs)
+                        return
+                    except TypeError:
+                        continue
             prune = getattr(cognee, "prune", None)
             if prune is not None and hasattr(prune, "prune_data"):
                 await prune.prune_data()
