@@ -36,5 +36,8 @@ Thumbs.db
 # Local data
 data/
 *.log
-out/incident_kb.json   # runtime KB state; out/briefing.md is the tracked artifact
-out/signals.json       # D1 runtime Signal stream (sim mode)
+# Runtime artifacts (sim state). out/briefing.md is the tracked demo artifact.
+# NOTE: git does not honor inline comments on a pattern line — keep them above.
+out/incident_kb.json
+out/signals.json
+out/team_memory.json
