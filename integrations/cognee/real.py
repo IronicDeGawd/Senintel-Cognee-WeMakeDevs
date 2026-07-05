@@ -128,24 +128,54 @@ class CogneeReal(CogneeIntegration):
         return asyncio.run(_run())
 
     def recall(self, query: str, limit: int = 5) -> list[MemoryItem]:
-        async def _run() -> list:
+        async def _run() -> list[str]:
             import cognee
 
             await _serve_if_cloud()
+
+            # Prefer CHUNKS retrieval: remember() stores each MemoryItem as a
+            # JSON document, and CHUNKS returns those texts verbatim — exactly
+            # what the parser below expects. recall(only_context=True) returns
+            # a graph-context dump ("Nodes:\n__node_content_start__...") that
+            # json.loads can never parse, so every recall used to collapse into
+            # a single unreadable "Recalled Context" fallback item.
+            try:
+                from cognee.modules.search.types import SearchType
+
+                datasets_results = await cognee.search(
+                    query_type=SearchType.CHUNKS,
+                    query_text=query,
+                    datasets=[self._dataset],
+                    top_k=limit,
+                )
+                chunks: list[str] = []
+                for ds in datasets_results or []:
+                    hits = ds.get("search_result", []) if isinstance(ds, dict) else []
+                    for hit in hits:
+                        text = hit.get("text") if isinstance(hit, dict) else getattr(hit, "text", None)
+                        if text:
+                            chunks.append(text)
+                if chunks:
+                    return chunks[:limit]
+            except Exception:
+                log.exception("CHUNKS search failed; falling back to recall()")
+
             results = await cognee.recall(
                 query_text=query,
                 top_k=limit,
                 datasets=[self._dataset],
                 only_context=True,
             )
-            return list(results or [])
+            texts: list[str] = []
+            for r in results or []:
+                text = getattr(r, "text", None) or (r.get("text") if isinstance(r, dict) else None)
+                if text:
+                    texts.append(text)
+            return texts
 
         raw = asyncio.run(_run())
         items: list[MemoryItem] = []
-        for r in raw:
-            text = getattr(r, "text", None)
-            if not text:
-                continue  # skip empty graph-completion results
+        for text in raw:
             try:
                 data = json.loads(text)
                 items.append(MemoryItem(**data))
