@@ -8,15 +8,17 @@
 - **Base:** SentinelAI, built for the Google Cloud Rapid Agent Hackathon.
   Autonomous guardian across three pillars — code (pre-prod), production health,
   AI/LLM quality. Same-SHA cross-pillar correlation is the money shot.
-- **New goal:** extend the project for the **WeMakeDevs** hackathon.
+- **New goal:** extend the project for the **WeMakeDevs "Where's My Context?"**
+  hackathon (Cognee memory layer). **Deadline: July 5, 2026 — TODAY.**
 - **Repo:** `IronicDeGawd/Senintel-Cognee-WeMakeDevs` (HTTPS, main).
-- **Extension hypothesis (unconfirmed):** repo name carries "Cognee" — likely a
-  Cognee (agent memory / knowledge-graph) integration. CONFIRM with user before
-  planning around it.
+- **Confirmed feature:** Cognee-powered **AI PR reviewer** — remembers a team's
+  real coding conventions, past bug patterns, prior review comments across
+  sessions; `recall()` on new PR, `remember()` on merge. Extends `code_guardian`.
 
 ## Current Status
-- Fresh repo initialized, first commits pushed. No feature work started yet.
-- This context folder just scaffolded.
+- Research done (`research/wemakedevs.md`, `research/cognee.md`).
+- Plan written: `plan/cognee-pr-reviewer.md` (6-step MVP-first sequence).
+- No feature code yet. Awaiting 3 decisions: target track, MVP cutoff, demo source.
 
 ## Completed
 - 2026-07-05 — Fresh git repo (new history), pushed to `IronicDeGawd/Senintel-Cognee-WeMakeDevs`.
