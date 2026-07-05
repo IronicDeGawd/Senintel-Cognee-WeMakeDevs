@@ -1,147 +1,182 @@
-# SentinelAI
+# SentinelAI — the PR reviewer that remembers
 
-> **The autonomous engineer that watches your entire delivery pipeline so your team can ship faster and sleep better.**
+> **An AI code reviewer with long-term memory. It learns your team's real conventions and past bugs, and applies them to every new pull request — powered by [Cognee](https://www.cognee.ai/).**
 
-Every team builds the same broken loop: Dynatrace pages, Slack panics, someone greps `git log`, someone else opens the MR, someone else digs the eval dashboard. Three tools, three contexts, three humans, fifteen minutes of guessing, then a roll-back nobody trusts.
-
-**SentinelAI runs that loop for you, in 70 seconds, with the receipts.**
-
-One Google ADK agent, three pillars — production observability, code review, AI quality — wired into **real** partner MCP servers. Production spikes, finds the suspect commit, reviews the diff, gates a regressed model, and stamps a single verdict on a live dashboard:
-
-> *Roll back MR !1 / commit `91d2dd2c`*
-
-Live demo: **https://sentinel.parakramlabs.com** *(falls back to [sentinelai-dashboard.run.app](https://sentinelai-dashboard-552996008511.us-central1.run.app/) while DNS cert provisions)*
+Built for the **WeMakeDevs "Where's My Context?"** hackathon.
 
 ---
 
-## The 70-second arc
+## The problem: AI reviewers have amnesia
 
-```
-1. Dynatrace                                    →  p95 spike, real Davis Problem
-2. Production Sentinel (Gemini + DT MCP)        →  RCA → "N+1 in checkout/views.py"
-3. Cross-pillar correlation                     →  pins to deploy commit 91d2dd2c
-4. Code Guardian (Gemini + GitLab MCP/REST)     →  posts review note on real MR !1
-5. AI Quality Gate (Arize-shaped Signal)        →  blocks deploy on 22% hallucination
-6. Dashboard                                    →  one envelope, one verdict
-```
+Every AI code reviewer starts from zero on every pull request. It re-reads the same static style guide and reviews in a vacuum. It doesn't know that *your* team already shipped an N+1 query that caused an outage last month. It doesn't remember the conventions you agreed on in review threads. The knowledge is there — in your merge history — but the reviewer can't reach it.
 
-Every step is **real**: real Davis problem in a real Dynatrace tenant, real Gemini calls on Vertex AI, real GitLab note on a real merge request, real Firestore writes, real Cloud Run cold-starts. The "Run scenario" button on the dashboard fires this end to end on demand.
+**SentinelAI gives the reviewer a memory.**
+
+- When a PR **merges**, it *remembers* every review finding and post-merge bug.
+- When the next PR **arrives**, it *recalls* the relevant history and reviews in context — like a senior engineer who's been on the team for years.
+
+The memory is a **knowledge graph plus vector store**, built and queried by Cognee.
 
 ---
 
-## What makes it interesting
+## How Cognee powers the memory
 
-- **Real MCP, not toy MCP.** Headless `npx @dynatrace-oss/dynatrace-mcp-server` over stdio, GitLab Duo `mcp-remote` for the conversational tools, REST fallback for the project-ACL hole in the Duo Beta. We solved the elicit-input-gate problem with a generic auto-approve callback that reads the server's elicit schema and fills required fields — works for any MCP server, not just Dynatrace's.
-- **Cross-pillar correlation is the money shot.** The dashboard's correlation panel joins the latest production Signal to the matching code Signal by the *exact* commit SHA. Gemini gets the suspect deploy diff in the same prompt as the draft incident — it names the file and the regression class, not just "investigate."
-- **Team Memory via Cognee.** SentinelAI remembers past mistakes and lessons learned using Cognee. When reviewing a new MR, the Code Guardian recalls relevant context from past incidents or reviews, catching repeating patterns (like N+1 queries) that a stateless model would miss.
-- **Sim/real switch on every adapter.** `SENTINEL_<PILLAR>_MODE=sim` runs the whole stack on fixtures with deterministic embeddings — no creds, no network, no cost — for tests and demo backup. Flip to `real` for live.
-- **One envelope, many pillars.** Every pillar emits the same `Signal {pillar, status, headline, detail, ts}` model. The dashboard speaks Signal. New pillars plug in without dashboard changes.
-- **Demo Director seeds the live tenant.** Live demos want repeatability. The Demo Director POSTs scenario data into the real Dynatrace tenant via MCP `send_event` (needs scope `storage:events:write`), Davis promotes those events into real Problems within 30s, the cycle picks them up — actual partner data, scripted story.
+SentinelAI's code reviewer (the `code_guardian` pillar) wraps Cognee behind a small, swappable interface:
+
+```
+remember(item)   →  store a review finding / post-merge bug in the team's graph
+recall(query)    →  pull the relevant conventions + past bugs for a new diff
+improve()        →  re-index / strengthen the graph (cognify)
+forget(dataset)  →  surgical delete of a memory namespace
+```
+
+**The lifecycle, end to end:**
+
+```
+1. Merge PR  →  remember_review(review)   →  Cognee builds graph nodes + edges
+2. New PR    →  recall_context(diff)       →  relevant memory injected into the prompt
+3. Review    →  Gemini flags the recurring bug, cites "seen before"
+4. Store     →  the new finding is remembered  →  the graph grows
+5. Repeat    →  every merge makes the next review smarter
+```
+
+**One detail that mattered:** Cognee's semantic retrieval matches on *intent-language*, not raw code. Handing it a unified diff returned nothing — the diff embeds too far from a stored rule like "avoid N+1 queries in loops." So before recall, the diff is summarized to one natural-language sentence (via Gemini) and *that* is the query. This is the difference between memory reaching the review or not. See [`agents/sentinel/pillars/code_guardian/memory.py`](agents/sentinel/pillars/code_guardian/memory.py).
 
 ---
 
-## Project structure
+## See the memory
+
+Cognee stores the team's memory as a real knowledge graph on disk. Render it:
+
+```python
+import cognee
+await cognee.visualize_graph("out/cognee_graph.html", dataset="sentinel_team_memory")
+```
+
+The result is an interactive graph — nodes for each rule, finding, and concept, with typed edges between them, e.g.:
 
 ```
-agents/sentinel/
-  agent.py                            root ADK orchestrator (assembles pillar tools by mode)
-  pillars/
-    production_sentinel/              P2 — Dynatrace pillar (RCA, correlation, cycle)
-    code_guardian/                    P1 — GitLab pillar (review, CI RCA, note posting)
-    ai_quality_gate/                  P3 — Arize-shaped gate
-  demo_director/                      D8 — scenario seeder for the demo arc
-integrations/
-  base.py                             Integration ABC + build_integration mode switch
-  dynatrace/                          interface + simulator + real (MCP) + factory
-  gitlab/                             interface + simulator + real (REST + MCP) + factory
-  arize/                              interface + simulator + factory (real path stretch)
-shared/
-  models.py                           THE CONTRACT (Signal, Problem, MRReview, EvalResult, Incident)
-  config.py                           typed settings + .env load
-  mcp_client.py                       one-shot stdio MCP client + auto-approve elicit handler
-  llm.py                              Gemini wrapper (Vertex AI + ADC, structured JSON)
-  observability.py                    ADK → OTel → Dynatrace OTLP self-tracing
-storage/
-  signal_store.py                     JsonFileSignalStore (sim) + FirestoreSignalStore (real)
-  incident_kb.py                      embedding-similarity incident memory
-  eval_trends.py                      eval drift time series
-services/
-  webhook_gateway/                    GitLab webhook → Code Guardian cycle
-  poller/                             Cloud Scheduler → Production Sentinel cycle
-  eval_runner/                        Eval suite trigger → AI Quality Gate Signal
-  dashboard_api/                      6-endpoint read API the frontend polls (5s)
-  demo_director/                      POST /demo/run drives the scenario across pillars
-dashboard/                            Next.js 16 + Tailwind v4 + SWR (live + mocked fallback)
-infra/deploy.sh                       deploys all 6 Cloud Run services
+avoid n+1 queries in loops  --[describes_problem]-->  n+1 query looping over orders
+n+1 query problem           --[caused_by_action]-->  fetching notifications per subscriber
 ```
+
+That is the team's accumulated review knowledge, queryable and growing.
 
 ---
 
-## Stack
+## What's real, what's mocked
+
+This is an MVP that **spotlights the Cognee memory pillar**. SentinelAI has three pillars (code review, production observability, AI-quality); the other two run in sim mode for this submission.
+
+| Component | Mode | Notes |
+|---|---|---|
+| **Cognee memory** | **Real** | Local self-hosted knowledge graph + LanceDB vector store |
+| **Gemini (review + diff summary)** | **Real** | Gemini 2.5 Flash on Vertex AI via ADC |
+| **Embeddings** | **Real** | Vertex AI text embeddings (Cognee's embedder) |
+| Code diffs (PR inputs) | Fixtures | Deterministic, repeatable demo — `integrations/gitlab/fixtures/mr_diff.json` |
+| Production Sentinel (Dynatrace) | Sim/mock | Partner free tier expired; dashboard shows mock data |
+| AI Quality Gate (Arize) | Sim/mock | Same |
+
+Every adapter has a `sim` and `real` path behind one interface, so the whole stack also runs **fully offline** (deterministic local embeddings) for tests — no creds, no network, no cost.
+
+---
+
+## Tech stack
 
 | Layer | Tech |
 |---|---|
-| Agent runtime | Google ADK 2.x, Gemini 2.5 Flash on Vertex AI (ADC, no API key) |
-| Partner MCP | Dynatrace MCP server v1.8.7 (stdio via `npx`) + GitLab Duo MCP (mcp-remote, OAuth DCR) |
-| Backend | FastAPI · uvicorn · httpx · pydantic v2 · tenacity (retry) |
-| Frontend | Next.js 16 standalone · Tailwind v4 · SWR · recharts · Instrument Serif + Geist + JetBrains Mono |
-| Storage | Firestore (`signals` + `incidents` collections, composite indexes) · Vertex AI text-embedding-005 |
-| Self-observability | ADK OpenInference → OTel → Dynatrace OTLP ingest (no-op unless creds set) |
-| Infra | 6 Cloud Run services, one shared backend image (Python 3.12 + Node 22), one frontend image, Cloud Build, Secret Manager |
-| Tests | pytest 138 green · ruff clean |
+| **Memory** | **Cognee 1.x** — knowledge graph + vector store, `remember/recall/improve/forget` |
+| Vector store | LanceDB (Cognee's local backend) |
+| Agent runtime | Google ADK, Gemini 2.5 Flash on Vertex AI (ADC, no API key) |
+| Embeddings | Vertex AI text embeddings |
+| Backend | Python 3.10+ · FastAPI · uvicorn · pydantic v2 · tenacity (retry) |
+| Dashboard | Next.js 16 · Tailwind v4 · SWR (live + mocked fallback) |
+| Contract | one `Signal` envelope + append-only pydantic models across pillars |
+| Tests | pytest — 149 passing (memory suite runs offline in sim) |
+
+---
+
+## Project structure (memory path)
+
+```
+agents/sentinel/pillars/code_guardian/
+  memory.py            recall_context(diff)  +  remember_review(review)   ← the glue
+  review.py            injects the recalled TEAM MEMORY block into the prompt
+  cycle.py             remembers each review's findings after the Signal is built
+integrations/cognee/
+  interface.py         CogneeIntegration ABC (remember/recall/improve/forget)
+  simulator.py         offline JSON + local embeddings (tests, no creds)
+  real.py              Cognee adapter — async SDK wrapped for the sync codebase
+  factory.py           mode switch (sim | real) by SENTINEL_MEMORY_MODE
+  fixtures/team_history.json   seed content (past reviews + a post-merge bug)
+shared/
+  models.py            MemoryItem (repo, file, rule, comment, severity, source, commit, ts)
+  config.py            typed settings + .env load
+  llm.py               Gemini wrapper (Vertex AI + ADC)
+scripts/
+  seed_team_memory.py  seed the graph + recall smoke  (--reset to forget first)
+  run_code_review.py   run one review cycle from the CLI
+tests/test_code_memory.py   remember→recall roundtrip, prompt injection, forget (offline)
+```
+
+The other two pillars (`production_sentinel`, `ai_quality_gate`) and the dashboard live alongside; they run in sim mode here.
 
 ---
 
 ## Running it
 
 ```bash
-# One-time
-python3 -m venv .venv && source .venv/bin/activate
+# One-time setup
+python -m venv .venv
+.venv/Scripts/activate            # Windows   (source .venv/bin/activate on macOS/Linux)
 pip install -r requirements.txt
-gcloud auth application-default login          # Gemini via Vertex AI + ADC
+gcloud auth application-default login    # Vertex ADC — powers Gemini + Cognee embeddings
 gcloud config set project <your-gcp-project>
-cp .env.example .env                            # set GOOGLE_CLOUD_PROJECT + LOCATION
-
-# Sim demo (no creds, no network)
-python scripts/run_agent.py "say hi in one sentence"
-python scripts/run_briefing.py                  # full P2 cycle on fixtures
-python scripts/run_code_review.py abc1234       # full P1 cycle on fixtures
-python scripts/run_eval_gate.py                 # full P3 cycle on fixtures
-
-# Dashboard (frontend)
-cd dashboard
-npm install
-npm run dev                                     # http://localhost:3000
-
-# Quality gates
-pytest -q                                       # 138 green
-ruff check                                      # clean
+cp .env.example .env                     # set GOOGLE_CLOUD_PROJECT
 ```
 
-To run **real** — set `SENTINEL_<PILLAR>_MODE=real` plus the credentials in `.env.example` for that pillar. The contracts are identical between sim and real, so agent code never changes.
+**Real Cognee memory** (the demo) — in `.env`:
 
-To deploy to Cloud Run end to end:
+```
+SENTINEL_MEMORY_MODE=real
+COGNEE_SERVICE_URL=            # blank = local self-hosted graph
+```
 
 ```bash
-./infra/deploy.sh all                           # builds + deploys all 6 services
+python scripts/seed_team_memory.py --reset   # build the team-memory graph, run a recall smoke
+python scripts/run_code_review.py cafe123     # review a new PR → recall fires → flags the N+1
+```
+
+- `cafe123` — a notifications PR with an N+1 hidden in a loop (recall catches it from history).
+- `def5678` / `abc1234` — the original demo PRs (`mr_diff.json`).
+
+**Offline / sim mode** (no creds, deterministic) — set `SENTINEL_MEMORY_MODE=sim`, or just:
+
+```bash
+pytest -q                                     # 149 passing, fully offline
+```
+
+> **Windows note:** Cognee's local store is relocated to `C:/cognee` automatically — the default path buries files past the 260-char `MAX_PATH` limit. Handled in `integrations/cognee/real.py`.
+
+**Dashboard** (optional, shows the MemoryPanel + mocked pillars):
+
+```bash
+# backend
+uvicorn services.dashboard_api.main:app --port 8000
+# frontend
+cd dashboard && npm install
+NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000 npm run dev   # http://localhost:3000
 ```
 
 ---
 
 ## About the project
 
-This started as a complaint, not an idea. Every place we've shipped software had the same 2am ritual: an observability alert fires, someone opens the problem card and stares at it, someone else greps `git log` for whatever deployed that afternoon, a third person opens the merge request and scrolls the diff hoping something looks guilty. Three tabs, three people — and the answer was usually sitting in plain sight the whole time. The alert and the commit just lived in tools that never talk to each other.
+This started from a real frustration: AI code review that never learns. You tell the reviewer the same thing every sprint — "we don't do N+1 queries here," "use the shared client," "this endpoint has a subtle auth check" — and next PR it's forgotten all of it. The team's hard-won lessons live in merged review threads and post-mortems, but the reviewer can't see them.
 
-When we picked the Dynatrace track, the pitch wrote itself: stop building another dashboard that *shows* you the incident — build the engineer that *works* it. The agent should do exactly what the senior on-call does: read the Davis problem, find what deployed in the same window, read that diff, and say "roll back MR !1" with the evidence attached. Except in seconds, and without waking anyone up.
+The WeMakeDevs "Where's My Context?" theme named the problem exactly: context that doesn't survive across sessions. Cognee is the fix — a memory layer that turns each review into a queryable knowledge graph instead of a discarded transcript. The interesting engineering wasn't calling `remember()`; it was making `recall()` actually surface the right memory for a raw code diff, which took a natural-language-summary step to bridge code and Cognee's semantic retrieval. Once that clicked, the loop closed: the reviewer flags a recurring bug in a service it had never seen, purely because the team remembered the pattern.
 
-Building it on real partner backends — not mocks — was where the actual work went, and the scars are in the code:
-
-- The Dynatrace MCP server gates `send_event` behind a human-approval prompt that silently auto-declines in a headless service. We lost an evening to "Operation cancelled" before writing a schema-aware auto-approve callback (`shared/mcp_client.py`) that reads the server's elicit schema and fills the required fields — it works against any MCP server, not just this one.
-- Davis takes 20–60 seconds to promote a custom alert into a real problem. Our first runs raced it and lost, so the cycle falls back to querying the raw events until Davis catches up.
-- DQL results came back as markdown with a JSON code-fence buried inside, not as records. There's a parser for that now in `integrations/dynatrace/real.py`, and we're not proud of how long it took to notice.
-- Gemini would nail the root-cause analysis and then occasionally drop the suspect commit from its structured output — the one field the whole correlation story hangs on. The pipeline now pins it back deterministically after the model call.
-
-The result is the loop we always wanted at 2am: a real Davis problem, a real Gemini RCA, a real review note on a real merge request, one verdict on one screen, about seventy seconds end to end. Click the button and watch it work.
+The base — SentinelAI, a three-pillar delivery guardian — gave us the agent, the sim/real adapter contract, and the dashboard to plug the memory into. This submission spotlights the memory pillar.
 
 ---
 
