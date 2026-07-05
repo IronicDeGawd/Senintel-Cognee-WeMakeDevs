@@ -47,6 +47,9 @@
 - 2026-07-05 — Fresh git repo (new history), pushed to `IronicDeGawd/Senintel-Cognee-WeMakeDevs`.
 - 2026-07-05 — Zone-1 scrub: source links + old-hackathon framing updated.
 - 2026-07-05 — Scaffolded `context-wemakedevs/`.
+- 2026-07-05 — Build recheck: full suite green (149). Fixed offline code-memory
+  suite timing out under a `real`-mode `.env` (autouse fixture pins sim); ignore
+  `out/mr_note_*.md`. Committed + pushed (`6ffff22`).
 
 ## Known Issues
 - **Cognee Cloud recall returns empty (local works).** With `COGNEE_SERVICE_URL` set,
@@ -67,6 +70,9 @@
 - [ ] Write `plan/<feature>.md` before any multi-file change.
 
 ## Lessons
+- Offline test suites that route through `get_cognee()` must pin `memory_mode=sim`
+  via an autouse fixture. A local `.env` with `SENTINEL_MEMORY_MODE=real` otherwise
+  leaks into tests, hitting the networked Cognee backend and timing out.
 - (append patterns from user corrections here)
 
 ## Resume From Here
