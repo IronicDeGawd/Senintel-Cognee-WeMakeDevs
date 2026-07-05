@@ -31,7 +31,7 @@
   `.env` (`SENTINEL_MEMORY_MODE=real`, `COGNEE_API_KEY`), seed `team_history.json`
   into Cognee Cloud, run the live remember→recall smoke.
 - **Track J (Jatin) DONE:** scenario fixtures, seed content, README + demo script,
-  stretch dashboard MemoryPanel (frontend built, `useMemory` hook implemented, backend `/memory/recall` endpoint wired).
+  stretch dashboard MemoryPanel (frontend built with rich aesthetics, timestamps, sources, `useMemory` hook implemented, backend `/memory/recall` endpoint wired).
 
 ## Team split
 - **Vasu (Python/AI):** entire Cognee integration + memory brain (Phase 0, sim + real

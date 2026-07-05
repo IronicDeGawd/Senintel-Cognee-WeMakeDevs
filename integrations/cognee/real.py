@@ -39,12 +39,9 @@ def _configure() -> None:
 
 
 def _item_text(item: MemoryItem) -> str:
-    """Flatten a MemoryItem into one sentence Cognee ingests + later recalls."""
-    loc = f" in {item.file}" if item.file else ""
-    return (
-        f"[{item.severity.value}] {item.rule}{loc} "
-        f"(repo {item.repo}, commit {item.commit}, {item.source}): {item.comment}"
-    )
+    """Flatten a MemoryItem so Cognee ingests it. We use JSON so the dashboard
+    can recover the structured fields (timestamps, rules, etc) perfectly."""
+    return item.model_dump_json()
 
 
 class CogneeReal(CogneeIntegration):
@@ -86,18 +83,27 @@ class CogneeReal(CogneeIntegration):
         raw = asyncio.run(_run())
         items: list[MemoryItem] = []
         for r in raw:
-            text = getattr(r, "text", None) or str(r)
-            items.append(
-                MemoryItem(
-                    repo=self._dataset,
-                    file=None,
-                    rule="recalled",
-                    comment=text,
-                    severity=Severity.INFO,
-                    source="review",
-                    commit="",
+            text = getattr(r, "text", None)
+            if not text:
+                continue  # Skip empty graph completion results that break the UI
+                
+            try:
+                import json
+                data = json.loads(text)
+                items.append(MemoryItem(**data))
+            except Exception:
+                # Fallback if the data was seeded as plain text instead of JSON
+                items.append(
+                    MemoryItem(
+                        repo=self._dataset,
+                        file=None,
+                        rule="Recalled Context",
+                        comment=text,
+                        severity=Severity.INFO,
+                        source="review",
+                        commit="",
+                    )
                 )
-            )
         return items
 
     def improve(self) -> None:
