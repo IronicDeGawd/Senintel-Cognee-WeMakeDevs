@@ -12,7 +12,7 @@ eval-runner service uses (run the suite, then gate it).
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from shared.config import Mode
 from shared.models import EvalResult, Signal
@@ -41,7 +41,7 @@ def decide(result: EvalResult) -> Signal:
         status=status,  # type: ignore[arg-type]
         headline=headline,
         detail=result.model_dump(),
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
 
 

@@ -1,7 +1,7 @@
 """Foundation smoke tests: contracts import, config defaults to sim, the mode
 switch returns the sim adapter, and the root agent builds."""
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import pytest
 
@@ -36,7 +36,7 @@ def test_signal_carries_incident_payload():
         status="critical",
         headline="Checkout degraded",
         detail=incident.model_dump(),
-        ts=datetime.now(UTC),
+        ts=datetime.now(timezone.utc),
     )
     assert sig.pillar == "production"
     assert sig.detail["suspect_commit"] == "abc1234"

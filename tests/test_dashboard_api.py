@@ -1,7 +1,7 @@
 """D2: dashboard_api endpoints. Offline — stores stubbed via monkeypatch,
 upstream Cloud Run hits stubbed via an httpx transport."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 import httpx
 from fastapi.testclient import TestClient
@@ -23,7 +23,7 @@ def _signal(
         status="warning",
         headline=headline,
         detail=detail or {},
-        ts=datetime.now(UTC) - timedelta(minutes=minutes_ago),
+        ts=datetime.now(timezone.utc) - timedelta(minutes=minutes_ago),
     )
 
 

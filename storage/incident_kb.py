@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import uuid
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -38,7 +38,7 @@ class StoredIncident(BaseModel):
     """One KB row: the Incident plus bookkeeping for ordering and similarity."""
 
     id: str = Field(default_factory=lambda: uuid.uuid4().hex)
-    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    ts: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     incident: Incident
     embedding: list[float]
 

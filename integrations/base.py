@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from typing import TypeVar
 
 from shared.config import Mode
 
@@ -30,7 +31,8 @@ class Integration(ABC):
         ...
 
 
-def build_integration[T: Integration](
+T = TypeVar("T", bound="Integration")
+def build_integration(
     mode: Mode,
     sim_factory: Callable[[], T],
     real_factory: Callable[[], T],

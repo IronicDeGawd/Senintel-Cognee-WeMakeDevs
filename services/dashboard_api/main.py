@@ -146,6 +146,27 @@ def correlation() -> dict:
     }
 
 
+@app.get("/memory/recall")
+def memory_recall() -> list[dict]:
+    """Stretch goal: Read team memory from the Cognee integration.
+    Currently returns the fixture directly until the factory is wired."""
+    try:
+        from integrations.cognee.factory import get as get_cognee
+        cog = get_cognee()
+        memories = cog.recall("team history", limit=20)
+        if memories:
+            return [m.model_dump(mode="json") for m in memories]
+    except Exception as e:
+        log.warning(f"Cognee recall failed: {e}. Falling back to fixture.")
+
+    import json
+    from pathlib import Path
+    fixture = Path(__file__).resolve().parents[2] / "integrations" / "cognee" / "fixtures" / "team_history.json"
+    if fixture.exists():
+        return json.loads(fixture.read_text(encoding="utf-8"))
+    return []
+
+
 @app.get("/trends/quality")
 def trends_quality(limit: int = 30) -> list[dict]:
     """Eval trend rows (latest N), newest first. Powers the drift chart."""

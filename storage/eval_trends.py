@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from shared.config import settings
@@ -26,7 +26,7 @@ _DEFAULT_PATH = Path(__file__).resolve().parent.parent / "out" / "eval_trends.js
 
 def _row(result: EvalResult) -> dict:
     """Flatten one run into a trend row (newest-orderable by ts)."""
-    return {"ts": datetime.now(UTC).isoformat(), **result.model_dump(mode="json")}
+    return {"ts": datetime.now(timezone.utc).isoformat(), **result.model_dump(mode="json")}
 
 
 class EvalTrends(ABC):

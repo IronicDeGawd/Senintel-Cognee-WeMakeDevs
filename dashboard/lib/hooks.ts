@@ -119,3 +119,29 @@ export function useQualityTrends(limit = 30) {
     },
   );
 }
+
+export function useMemory() {
+  const fallback: any[] = [
+    {
+      id: "mem-001",
+      repo: "main-backend",
+      file: "checkout/views.py",
+      rule: "Avoid N+1 queries in loops",
+      comment: "In PR #42 (commit abc1234), we introduced a severe N+1 query by looping over orders and querying items individually. This caused a DB outage during peak traffic. Always use `select_related` or `prefetch_related` instead of querying inside a loop.",
+      severity: "critical",
+      source: "post_merge_bug",
+      commit: "abc1234",
+      ts: "2026-06-10T12:00:00Z"
+    }
+  ];
+  return useSWR<any[]>(
+    `/memory/recall`,
+    (path: string) => fetcher<any[]>(path).catch(fallbackOnUnconfigured(fallback)),
+    {
+      refreshInterval: REFRESH_MS,
+      fallbackData: fallback,
+      keepPreviousData: true,
+    },
+  );
+}
+

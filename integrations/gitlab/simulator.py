@@ -26,6 +26,12 @@ class GitLabSimulator(GitLabIntegration):
 
     def get_mr_diff(self, commit: str) -> dict:
         data = json.loads(_MR_DIFF.read_text(encoding="utf-8"))
+        if isinstance(data, list):
+            for pr in data:
+                if commit and commit in (pr["commit"], pr["commit"][:7]):
+                    return pr
+            return {"error": f"no merge request found for commit {commit}"}
+        
         if commit and commit not in (data["commit"], data["commit"][:7]):
             return {
                 "error": f"no merge request found for commit {commit}",

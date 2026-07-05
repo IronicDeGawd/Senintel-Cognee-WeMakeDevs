@@ -3,7 +3,7 @@ captures so the dashboard can render exactly what got seeded."""
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 import httpx
 
@@ -31,7 +31,7 @@ def seed_dynatrace_problem() -> dict:
     set so the dashboard's correlation panel pins prod ↔ code by exact commit.
     Falls back to the canonical fake SHA for sim / no-creds dev."""
     dt = get_dynatrace()
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     commit = _live_mr_head_commit() or SCENARIO_COMMIT
 
     spike_ok = dt.send_event(
