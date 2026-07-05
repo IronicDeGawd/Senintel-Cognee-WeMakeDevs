@@ -56,6 +56,14 @@ class Settings(BaseSettings):
     firestore_collection: str = "incidents"
     embedding_model: str = "text-embedding-005"
 
+    # --- Team code-review memory (WeMakeDevs / Cognee) ---
+    # sim = JSON-file shim + local embeddings (offline, free) for tests.
+    # real = Cognee Cloud: remember() on merge, recall() when reviewing a new PR.
+    memory_mode: Mode = Field("sim", validation_alias="SENTINEL_MEMORY_MODE")
+    memory_path: str = ""  # sim JSON shim path; defaults to out/team_memory.json
+    cognee_api_key: str = ""  # Cognee Cloud key (memory_mode=real); coupon COGNEE-35
+    cognee_dataset: str = "sentinel_team_memory"  # Cognee dataset / namespace
+
     # --- Delivery (P2-5) ---
     # sim = write the briefing to out/briefing.md. real = post to Slack.
     delivery_mode: Mode = Field("sim", validation_alias="SENTINEL_DELIVERY_MODE")

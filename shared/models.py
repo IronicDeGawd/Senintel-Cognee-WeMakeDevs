@@ -10,11 +10,12 @@ envelope). The dashboard only ever speaks `Signal`. The pillar-specific payload
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Literal
+from uuid import uuid4
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Severity(StrEnum):
@@ -88,3 +89,21 @@ class Signal(BaseModel):
     headline: str
     detail: dict  # pillar-specific payload (Incident / MRReview / EvalResult)
     ts: datetime
+
+
+class MemoryItem(BaseModel):
+    """WeMakeDevs — one unit of the team's code-review memory, stored in Cognee.
+
+    Written on merge (a review finding or a post-merge bug) and recalled when
+    reviewing a new PR. Append-only like the rest of this contract.
+    """
+
+    repo: str
+    file: str | None = None
+    rule: str  # short label, e.g. "n+1-query" — what the team learned
+    comment: str  # the human-readable review note / lesson
+    severity: Severity
+    source: Literal["review", "post_merge_bug"]
+    commit: str
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    id: str = Field(default_factory=lambda: uuid4().hex)
