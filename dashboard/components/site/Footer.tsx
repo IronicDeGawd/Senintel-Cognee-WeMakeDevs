@@ -39,7 +39,7 @@ export function Footer() {
             <li>
               <a
                 className="hover:text-ink"
-                href="https://github.com/IronicDeGawd/Senintel-Cognee-WeMakeDevs"
+                href="https://github.com/pandeyVasu/Senintel-Cognee-WeMakeDevs"
                 target="_blank"
                 rel="noreferrer"
               >
