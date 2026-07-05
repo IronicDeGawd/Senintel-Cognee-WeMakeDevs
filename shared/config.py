@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     memory_mode: Mode = Field("sim", validation_alias="SENTINEL_MEMORY_MODE")
     memory_path: str = ""  # sim JSON shim path; defaults to out/team_memory.json
     cognee_api_key: str = ""  # Cognee Cloud key (memory_mode=real); coupon COGNEE-35
+    cognee_service_url: str = ""  # Cognee Cloud tenant URL (e.g. https://<t>.aws.cognee.ai)
     cognee_dataset: str = "sentinel_team_memory"  # Cognee dataset / namespace
 
     # --- Delivery (P2-5) ---

@@ -33,6 +33,8 @@ def _configure() -> None:
     already-exported value (e.g. a real .env) always wins."""
     if settings.cognee_api_key:
         os.environ.setdefault("COGNEE_API_KEY", settings.cognee_api_key)
+    if settings.cognee_service_url:
+        os.environ.setdefault("COGNEE_SERVICE_URL", settings.cognee_service_url)
     if settings.gemini_api_key:
         os.environ.setdefault("LLM_PROVIDER", "gemini")
         os.environ.setdefault("LLM_MODEL", f"gemini/{settings.gemini_model}")
