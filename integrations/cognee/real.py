@@ -70,8 +70,9 @@ def _configure() -> None:
 
     # On Windows, Cognee's local LanceDB store buries files under the venv and
     # blows past the 260-char MAX_PATH limit. Relocate its system/data roots to a
-    # short path so writes succeed. No-op on Linux (Cloud Run) where paths are fine.
-    if os.name == "nt":
+    # short path so writes succeed. Skipped in Cloud mode (no local store) and on
+    # Linux (Cloud Run) where paths are fine.
+    if os.name == "nt" and not settings.cognee_service_url:
         try:
             import cognee
 
@@ -82,6 +83,17 @@ def _configure() -> None:
             cognee.config.data_root_directory(str(root / "data"))
         except Exception:
             log.exception("could not relocate cognee local root (non-fatal)")
+
+
+async def _serve_if_cloud() -> None:
+    """Connect to Cognee Cloud when a tenant URL is set, so remember/recall route
+    to the hosted tenant instead of the local graph. No-op in local mode.
+    COGNEE_SERVICE_URL must be a full URL (https://<tenant>.aws.cognee.ai), not a
+    bare tenant id."""
+    if settings.cognee_service_url:
+        import cognee
+
+        await cognee.serve(url=settings.cognee_service_url, api_key=settings.cognee_api_key)
 
 
 def _item_text(item: MemoryItem) -> str:
@@ -109,6 +121,7 @@ class CogneeReal(CogneeIntegration):
         async def _run() -> str:
             import cognee
 
+            await _serve_if_cloud()
             result = await cognee.remember(_item_text(item), dataset_name=self._dataset)
             return str(getattr(result, "dataset_id", None) or item.id)
 
@@ -118,6 +131,7 @@ class CogneeReal(CogneeIntegration):
         async def _run() -> list:
             import cognee
 
+            await _serve_if_cloud()
             results = await cognee.recall(
                 query_text=query,
                 top_k=limit,
@@ -154,6 +168,7 @@ class CogneeReal(CogneeIntegration):
         async def _run() -> None:
             import cognee
 
+            await _serve_if_cloud()
             fn = getattr(cognee, "cognify", None)
             if fn is not None:
                 await fn()
@@ -169,6 +184,7 @@ class CogneeReal(CogneeIntegration):
         async def _run() -> None:
             import cognee
 
+            await _serve_if_cloud()
             forget_fn = getattr(cognee, "forget", None)
             if forget_fn is not None:
                 await forget_fn(dataset_name=target)
